@@ -1,0 +1,2343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>信号检测论 · 交互式实验室</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root{
+  --bg:#080b0e; --panel:#10161b; --panel-2:#161e24; --line:#24303a;
+  --text:#e6f1f3; --muted:#7d919b;
+  --cyan:#2ee6c4; --cyan-dark:#17a08a; --magenta:#ff4d9d;
+  --amber:#ffc857; --red:#ff6b6b; --blue:#5aa9ff;
+}
+body{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:radial-gradient(circle at 18% 0%, #0f1d1f 0%, var(--bg) 55%) fixed;color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.is-active{display:flex;}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 22px;border-bottom:1px solid var(--line);background:rgba(16,22,27,.78);backdrop-filter:blur(10px);position:sticky;top:0;z-index:20;}
+.user-chip{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted);letter-spacing:.4px;}
+.user-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:pulse 2s infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.admin-badge{display:none;margin-left:8px;padding:2px 8px;border-radius:999px;background:rgba(255,200,87,.15);color:#ffc857;font-size:11px;font-weight:700;letter-spacing:.5px;}
+.scene-name{font-size:14px;font-weight:600;color:var(--cyan);letter-spacing:.6px;}
+.progress-chip{font-family:ui-monospace,"Consolas",monospace;font-size:13px;color:var(--text);background:var(--panel-2);border:1px solid var(--line);padding:5px 14px;border-radius:999px;}
+.btn{font:inherit;font-weight:700;cursor:pointer;border-radius:12px;border:1px solid transparent;padding:11px 24px;transition:transform .14s,box-shadow .14s,background .14s,border-color .14s;color:var(--text);background:var(--panel-2);letter-spacing:.5px;}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.btn-ghost{background:transparent;border-color:var(--line);color:var(--muted);padding:8px 18px;font-size:13px;}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan);}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--cyan-dark));color:#04120f;box-shadow:0 6px 22px rgba(46,230,196,.25);}
+.btn-primary:hover{box-shadow:0 8px 28px rgba(46,230,196,.45);}
+.btn-mini{font-size:12px;padding:5px 12px;border-radius:8px;background:transparent;border:1px solid var(--line);color:var(--muted);}
+.btn-mini:hover{border-color:var(--magenta);color:var(--magenta);}
+.btn-danger{background:transparent;border-color:rgba(255,77,157,.4);color:var(--magenta);padding:8px 18px;font-size:13px;border-radius:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s;}
+.btn-danger:hover{background:rgba(255,77,157,.1);}
+.login-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
+.login-card{width:100%;max-width:430px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:34px 30px 28px;box-shadow:0 22px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.04);}
+.login-card.shake{animation:shake .34s;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.login-brand{display:inline-flex;align-items:center;gap:10px;margin-bottom:22px;}
+.brand-mark{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle, rgba(46,230,196,.9), rgba(46,230,196,0) 72%);box-shadow:0 0 14px rgba(46,230,196,.7);position:relative;flex-shrink:0;}
+.brand-mark::after{content:'';position:absolute;inset:6px;border-radius:50%;background:var(--cyan);}
+.brand-name{font-family:ui-monospace,monospace;font-size:12.5px;font-weight:700;color:var(--cyan);letter-spacing:3.5px;}
+.login-title{font-size:22px;font-weight:800;letter-spacing:.9px;margin-bottom:9px;line-height:1.3;}
+.login-sub{font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:24px;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12.5px;color:var(--muted);letter-spacing:.7px;margin-bottom:8px;}
+.field input{width:100%;font:inherit;font-size:14.5px;color:var(--text);background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:13px 15px;outline:none;transition:border-color .18s,box-shadow .18s;letter-spacing:.5px;}
+.field input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(46,230,196,.14);}
+.field input::placeholder{color:#4c5c65;}
+.login-error{font-size:12.5px;color:var(--magenta);min-height:18px;margin-bottom:10px;letter-spacing:.4px;}
+.btn-block{width:100%;padding:14px;font-size:15px;margin-top:4px;}
+.login-hint{font-size:11.5px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.7;}
+.home-wrap{flex:1;width:100%;max-width:880px;margin:0 auto;padding:34px 22px 70px;}
+.main-title{font-size:clamp(24px,4.6vw,36px);font-weight:800;letter-spacing:1.2px;line-height:1.25;background:linear-gradient(96deg,var(--cyan) 10%,var(--magenta) 95%);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:10px;}
+.main-sub{font-size:14px;color:var(--muted);margin-bottom:30px;letter-spacing:.5px;}
+.main-sub b{color:var(--cyan);}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:18px;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.panel-title{font-size:14.5px;font-weight:700;color:var(--cyan);letter-spacing:.8px;}
+.badge{font-family:ui-monospace,"Consolas",monospace;font-size:13px;background:rgba(46,230,196,.12);color:var(--cyan);border:1px solid rgba(46,230,196,.35);padding:4px 13px;border-radius:999px;}
+.slider-row{display:flex;align-items:center;gap:16px;}
+.slider-tag{font-size:12.5px;color:var(--muted);white-space:nowrap;}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:6px;border-radius:4px;background:linear-gradient(90deg,var(--magenta),var(--cyan));outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--cyan);box-shadow:0 0 14px rgba(46,230,196,.75);cursor:pointer;}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--cyan);box-shadow:0 0 14px rgba(46,230,196,.75);cursor:pointer;}
+.hint{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.6;}
+.radio-row{display:flex;gap:12px;flex-wrap:wrap;}
+.radio-card{flex:1;min-width:150px;cursor:pointer;}
+.radio-card input{display:none;}
+.radio-body{display:flex;flex-direction:column;gap:5px;padding:14px 16px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;transition:.18s;}
+.radio-body b{font-size:14px;color:var(--text);}
+.radio-body em{font-size:12.5px;color:var(--muted);font-style:normal;}
+.radio-card input:checked + .radio-body{border-color:var(--cyan);background:rgba(46,230,196,.08);box-shadow:inset 0 0 0 1px var(--cyan);}
+.radio-card[data-trial="10"] input:checked + .radio-body{border-color:var(--amber);background:rgba(255,200,87,.08);box-shadow:inset 0 0 0 1px var(--amber);}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media (max-width:680px){.role-grid{grid-template-columns:1fr;}}
+.role-card{display:flex;flex-direction:column;align-items:center;gap:9px;padding:24px 14px;background:var(--panel-2);border:1px solid var(--line);border-radius:16px;color:var(--text);font:inherit;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s;}
+.role-card:hover{transform:translateY(-5px);box-shadow:0 16px 34px rgba(0,0,0,.55);}
+.role-card[data-role="scam"]:hover{border-color:#2ee6c4;}
+.role-card[data-role="scam"] .role-icon svg{color:#2ee6c4;}
+.role-card[data-role="spam"]:hover{border-color:#ff4d9d;}
+.role-card[data-role="spam"] .role-icon svg{color:#ff4d9d;}
+.role-card[data-role="social"]:hover{border-color:#ffc857;}
+.role-card[data-role="social"] .role-icon svg{color:#ffc857;}
+.role-icon svg{width:44px;height:44px;display:block;}
+.role-name{font-size:15px;font-weight:700;letter-spacing:.6px;}
+.role-desc{font-size:12px;color:var(--muted);text-align:center;line-height:1.5;}
+.concept-wrap{flex:1;width:100%;max-width:1080px;margin:0 auto;padding:22px 20px 60px;}
+.concept-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.concept-header h2{font-size:20px;font-weight:800;letter-spacing:1px;}
+.concept-header h2 span{color:var(--cyan);}
+.concept-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;border-bottom:1px solid var(--line);padding-bottom:10px;}
+.tab-btn{font:inherit;font-size:13px;font-weight:600;padding:8px 16px;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--muted);cursor:pointer;transition:.15s;}
+.tab-btn:hover{color:var(--text);background:var(--panel-2);}
+.tab-btn.active{color:var(--cyan);background:rgba(46,230,196,.1);border-color:rgba(46,230,196,.3);}
+.concept-panel{display:none;}
+.concept-panel.active{display:block;}
+.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media (max-width:768px){.concept-grid{grid-template-columns:1fr;}}
+.concept-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;}
+.concept-card h3{font-size:14px;font-weight:700;color:var(--cyan);margin-bottom:16px;letter-spacing:.5px;}
+.concept-card.full-width{grid-column:1/-1;}
+.concept-slider-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.concept-slider-row label{font-size:12.5px;color:var(--muted);width:100px;}
+.concept-slider-row input[type=range]{flex:1;}
+.concept-slider-row .val{font-family:ui-monospace,monospace;font-size:14px;font-weight:700;color:var(--cyan);width:55px;text-align:right;}
+.concept-canvas{display:block;width:100%;height:340px;background:#0a1115;border:1px solid var(--line);border-radius:12px;}
+.matrix-mini{display:grid;grid-template-columns:70px 1fr 1fr;gap:4px;font-size:12px;margin-bottom:16px;}
+.matrix-mini .head{display:flex;align-items:center;justify-content:center;color:var(--muted);padding:4px;text-align:center;font-size:11px;}
+.matrix-mini .cell{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;border-radius:8px;border:1px solid transparent;}
+.matrix-mini .cell b{font-size:16px;font-family:ui-monospace,monospace;}
+.matrix-mini .cell span{font-size:10px;opacity:.7;}
+.matrix-mini .cell.hit{background:rgba(46,230,196,.14);border-color:rgba(46,230,196,.4);color:#7dffe4;}
+.matrix-mini .cell.fa{background:rgba(255,200,87,.13);border-color:rgba(255,200,87,.4);color:#ffd98a;}
+.matrix-mini .cell.miss{background:rgba(255,107,107,.13);border-color:rgba(255,107,107,.4);color:#ffa2a2;}
+.matrix-mini .cell.cr{background:rgba(90,169,255,.13);border-color:rgba(90,169,255,.4);color:#9ecbff;}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;}
+.metric-box{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px 8px;text-align:center;}
+.metric-box .label{font-size:11px;color:var(--muted);margin-bottom:6px;}
+.metric-box .value{font-family:ui-monospace,monospace;font-size:18px;font-weight:700;color:var(--cyan);}
+.concept-info{font-size:12.5px;color:var(--muted);line-height:1.7;margin-top:12px;padding:12px 14px;background:rgba(46,230,196,.05);border-left:3px solid var(--cyan);border-radius:0 8px 8px 0;}
+.vigilance-chart{width:100%;height:340px;background:#0a1115;border:1px solid var(--line);border-radius:12px;margin-bottom:16px;}
+.checkbox-row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;}
+.checkbox-row label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);cursor:pointer;}
+.checkbox-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--cyan);}
+.payoff-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:16px;}
+.payoff-table th,.payoff-table td{border:1px solid var(--line);padding:8px 10px;text-align:center;}
+.payoff-table th{background:var(--panel-2);color:var(--muted);font-weight:600;font-size:11.5px;}
+.payoff-table input{width:70px;text-align:center;background:transparent;border:none;color:var(--cyan);font-family:ui-monospace,monospace;font-size:14px;font-weight:700;outline:none;}
+.payoff-table input:focus{color:var(--amber);}
+.payoff-canvas{display:block;width:100%;height:140px;background:#0a1115;border:1px solid var(--line);border-radius:12px;margin-top:12px;}
+.data-wrap{flex:1;width:100%;max-width:1200px;margin:0 auto;padding:22px 20px 60px;}
+.data-wrap h2{font-size:20px;font-weight:800;letter-spacing:1px;margin-bottom:6px;}
+.data-wrap h2 span{color:var(--amber);}
+.data-summary{font-size:13px;color:var(--muted);margin-bottom:20px;letter-spacing:.4px;}
+.data-user-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:18px;}
+.data-user-card h3{font-size:16px;font-weight:800;color:var(--cyan);letter-spacing:.5px;margin-bottom:4px;}
+.data-user-card h3 .data-uid{font-family:ui-monospace,monospace;font-size:12.5px;color:var(--muted);font-weight:600;margin-left:10px;}
+.data-user-card .data-user-summary{font-size:12.5px;color:var(--muted);margin-bottom:14px;}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;overflow-x:auto;display:block;}
+.data-table thead{background:var(--panel-2);}
+.data-table th{color:var(--cyan);font-weight:700;padding:9px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line);font-size:11.5px;}
+.data-table td{padding:8px 10px;border-bottom:1px solid rgba(36,48,58,.5);color:var(--text);white-space:nowrap;font-family:ui-monospace,monospace;font-size:11.5px;}
+.data-table tr:hover td{background:rgba(46,230,196,.04);}
+.data-table td:first-child{color:var(--muted);}
+.data-empty{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;letter-spacing:.5px;}
+.data-actions{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+.data-sort-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px;padding:12px 16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;}
+.data-sort-label{font-size:13px;color:var(--muted);letter-spacing:.5px;margin-right:4px;}
+.sort-btn{font:inherit;font-size:12.5px;font-weight:600;padding:6px 14px;border-radius:8px;background:transparent;border:1px solid var(--line);color:var(--muted);cursor:pointer;transition:.15s;}
+.sort-btn:hover{color:var(--text);border-color:var(--cyan);}
+.sort-btn.active{color:var(--cyan);background:rgba(46,230,196,.1);border-color:rgba(46,230,196,.4);}
+.data-roc-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px;}
+.data-roc-card h3{font-size:14px;font-weight:700;color:var(--cyan);margin-bottom:6px;letter-spacing:.5px;}
+.data-roc-hint{font-size:12px;color:var(--muted);margin-bottom:14px;}
+.data-roc-wrap{position:relative;width:100%;}
+#canvas-data-roc{display:block;width:100%;height:460px;background:#0a1115;border:1px solid var(--line);border-radius:12px;cursor:crosshair;}
+.data-roc-tooltip{position:absolute;pointer-events:none;background:rgba(10,17,21,.97);border:1px solid var(--cyan);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text);white-space:nowrap;opacity:0;transition:opacity .12s;box-shadow:0 8px 24px rgba(0,0,0,.6);z-index:10;line-height:1.7;transform:translate(-50%,-100%);}
+.data-roc-tooltip.show{opacity:1;}
+.data-roc-tooltip .tip-name{color:var(--cyan);font-weight:700;font-size:13px;margin-bottom:4px;}
+.data-roc-tooltip .tip-row{color:var(--muted);}
+.data-roc-tooltip .tip-row b{color:var(--text);font-family:ui-monospace,monospace;margin-left:4px;}
+.data-roc-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted);}
+.data-roc-legend .legend-item{display:flex;align-items:center;gap:6px;}
+.data-roc-legend .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.exp-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:16px;padding:20px 16px 44px;}
+.instruction{font-size:14px;color:var(--muted);letter-spacing:.6px;text-align:center;max-width:600px;line-height:1.6;}
+.stage-wrap{position:relative;width:min(540px,90vw);min-height:400px;border-radius:24px;overflow:hidden;box-shadow:0 0 70px rgba(46,230,196,.10),0 0 0 1px rgba(46,230,196,.28);background:#040a09;display:flex;align-items:center;justify-content:center;padding:20px;transition:box-shadow .3s;}
+#stage-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;}
+.stage-content{position:relative;z-index:2;width:100%;display:flex;align-items:center;justify-content:center;}
+.stage-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(4,10,9,.75);color:var(--cyan);font-size:17px;font-weight:700;letter-spacing:3px;opacity:0;pointer-events:none;transition:opacity .16s;z-index:10;}
+.stage-overlay.show{opacity:1;}
+.feedback-flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;letter-spacing:4px;opacity:0;pointer-events:none;transition:opacity .1s;z-index:11;}
+.feedback-flash.show{opacity:1;}
+.feedback-flash.ok{background:rgba(46,230,196,.24);color:#8dffe8;box-shadow:inset 0 0 0 4px rgba(46,230,196,.85);}
+.feedback-flash.err{background:rgba(255,77,157,.24);color:#ffa8ce;box-shadow:inset 0 0 0 4px rgba(255,77,157,.85);}
+.phone-frame,.mail-frame,.post-frame{width:100%;max-width:360px;background:#0a1418;border:1.5px solid rgba(46,230,196,.3);border-radius:24px;padding:12px 14px 16px;font-size:13px;}
+.mail-frame{background:#140a18;border-color:rgba(255,77,157,.3);}
+.post-frame{background:#14100a;border-color:rgba(255,200,87,.3);}
+.phone-status{display:flex;justify-content:space-between;font-size:11px;color:rgba(46,230,196,.6);padding:2px 6px 10px;font-family:ui-monospace,monospace;}
+.phone-header{display:flex;align-items:center;padding:6px 0 12px;border-bottom:1px solid rgba(46,230,196,.1);margin-bottom:14px;}
+.phone-back{font-size:22px;color:var(--cyan);line-height:1;padding:0 12px 0 4px;}
+.phone-title{font-size:13px;color:#a8bcc4;letter-spacing:1px;}
+.phone-sender{font-size:11.5px;color:rgba(255,200,120,.7);text-align:center;font-family:ui-monospace,monospace;margin-bottom:14px;letter-spacing:.5px;}
+.message-bubble{background:rgba(46,230,196,.06);border:1px solid rgba(46,230,196,.15);border-radius:14px;padding:16px 18px;min-height:100px;display:flex;align-items:center;}
+.message-bubble p{font-size:14px;line-height:1.8;color:#c8d8de;letter-spacing:.3px;}
+.phone-input{margin-top:18px;background:rgba(46,230,196,.05);border:1px solid rgba(46,230,196,.1);border-radius:18px;padding:9px 18px;font-size:12px;color:#4c5c65;}
+.mail-header{display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid rgba(255,77,157,.12);margin-bottom:14px;}
+.mail-title{font-size:13.5px;font-weight:700;color:#ffb8d4;letter-spacing:.8px;}
+.mail-badge{margin-left:auto;font-size:11px;background:rgba(255,77,157,.15);color:#ffb8d4;padding:3px 10px;border-radius:999px;}
+.mail-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
+.mail-avatar{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#ff8fc0,#a03060);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#2a0515;flex-shrink:0;}
+.mail-meta{flex:1;min-width:0;}
+.mail-from{font-size:12px;color:rgba(255,180,210,.75);font-family:ui-monospace,monospace;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mail-subject{font-size:14px;font-weight:700;color:#e6c8d8;letter-spacing:.3px;}
+.mail-body{background:rgba(255,77,157,.06);border:1px solid rgba(255,77,157,.13);border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.8;color:#d8c0cc;letter-spacing:.3px;min-height:90px;display:flex;align-items:center;}
+.post-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.post-avatar{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#ffd98a,#a07020);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#1a1204;flex-shrink:0;}
+.post-user{flex:1;min-width:0;}
+.post-name{font-size:14px;font-weight:700;color:#e6d8b8;margin-bottom:4px;}
+.post-time{font-size:11px;color:rgba(255,200,87,.5);}
+.post-content{background:rgba(255,200,87,.05);border:1px solid rgba(255,200,87,.12);border-radius:12px;padding:16px 18px;font-size:14px;line-height:1.85;color:#ddd0b8;letter-spacing:.3px;min-height:80px;display:flex;align-items:center;margin-bottom:14px;}
+.post-actions{display:flex;gap:20px;font-size:12.5px;color:rgba(255,200,87,.7);padding-top:10px;border-top:1px solid rgba(255,200,87,.1);}
+.live-stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.stat-pill{font-size:12.5px;letter-spacing:.5px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);}
+.stat-pill b{color:var(--text);font-family:ui-monospace,monospace;}
+.stat-pill.hit b{color:var(--cyan);}
+.stat-pill.fa b{color:var(--amber);}
+.answer-row{display:flex;gap:16px;margin-top:4px;}
+.btn-signal,.btn-noise{min-width:150px;padding:13px 26px;}
+.btn-signal{background:linear-gradient(135deg,var(--cyan),var(--cyan-dark));color:#04120f;box-shadow:0 8px 24px rgba(46,230,196,.28);}
+.btn-signal:hover:not(:disabled){box-shadow:0 10px 30px rgba(46,230,196,.5);}
+.btn-noise{background:var(--panel-2);color:var(--text);border-color:var(--line);}
+.btn-noise:hover:not(:disabled){border-color:var(--magenta);color:var(--magenta);}
+body.role-spam .btn-signal{background:linear-gradient(135deg,#ff4d9d,#c4306f);color:#1a0510;}
+body.role-social .btn-signal{background:linear-gradient(135deg,#ffc857,#d49420);color:#1a1204;}
+.result-wrap{flex:1;width:100%;max-width:880px;margin:0 auto;padding:30px 22px 70px;}
+.result-title{font-size:23px;font-weight:800;letter-spacing:1px;margin-bottom:6px;}
+.result-title span{color:var(--cyan);}
+.result-meta{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6;}
+.matrix{display:grid;grid-template-columns:96px 1fr 1fr;gap:8px;}
+.matrix-head{display:flex;align-items:center;justify-content:center;font-size:12.5px;color:var(--muted);letter-spacing:.5px;padding:6px 4px;text-align:center;}
+.matrix-head.row-head{justify-content:flex-start;padding-left:4px;}
+.cell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:18px 8px;border-radius:12px;border:1px solid transparent;}
+.cell b{font-size:26px;font-family:ui-monospace,monospace;font-weight:800;}
+.cell span{font-size:11.5px;letter-spacing:.5px;opacity:.8;}
+.cell-hit{background:rgba(46,230,196,.14);border-color:rgba(46,230,196,.45);color:#7dffe4;}
+.cell-fa{background:rgba(255,200,87,.13);border-color:rgba(255,200,87,.42);color:#ffd98a;}
+.cell-miss{background:rgba(255,107,107,.13);border-color:rgba(255,107,107,.42);color:#ffa2a2;}
+.cell-cr{background:rgba(90,169,255,.13);border-color:rgba(90,169,255,.42);color:#9ecbff;}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+.metric{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 8px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;}
+.metric-label{font-size:12px;color:var(--muted);letter-spacing:.5px;}
+.metric-value{font-family:ui-monospace,"Consolas",monospace;font-size:19px;font-weight:700;color:var(--text);}
+.metric-value.big{font-size:30px;color:var(--cyan);}
+.metric-main{border-color:rgba(46,230,196,.4);background:rgba(46,230,196,.06);}
+.chart-cap{font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:.4px;}
+.chart{display:block;width:100%;height:200px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;margin-bottom:18px;}
+.result-actions{display:flex;gap:14px;justify-content:center;margin-top:6px;}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+<section class="screen is-active" id="screen-login">
+  <div class="login-wrap">
+    <div class="login-card" id="login-card">
+      <div class="login-brand"><span class="brand-mark"></span><span class="brand-name">SDT · LAB</span></div>
+      <h2 class="login-title">开始实验前，请登记身份</h2>
+      <p class="login-sub">姓名与学号仅保存在本机浏览器（localStorage）中，用于区分不同被试的实验数据。</p>
+      <div class="field"><label for="login-name">姓名</label><input type="text" id="login-name" placeholder="请输入你的姓名" autocomplete="off" maxlength="20"></div>
+      <div class="field"><label for="login-id">学号</label><input type="text" id="login-id" placeholder="请输入你的学号" autocomplete="off" maxlength="30"></div>
+      <p class="login-error" id="login-error"></p>
+      <button class="btn btn-primary btn-block" id="btn-login">进入实验室</button>
+      <p class="login-hint">同一学号再次进入时，会自动载入该学号的历史实验记录</p>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="screen-home">
+  <header class="topbar">
+    <div class="user-chip">
+      <span class="dot"></span>
+      <span class="user-chip-text">未登录</span>
+      <span class="admin-badge">🔧 管理员</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" id="btn-open-data" style="display:none;">📊 查看数据</button>
+      <button class="btn btn-ghost" id="btn-exit">退出登录</button>
+    </div>
+  </header>
+  <div class="home-wrap">
+    <h1 class="main-title">信号检测论 · 交互式实验室</h1>
+    <p class="main-sub">在噪声中做出判断 —— 量化你的辨别力 <b>d′</b> 与判断标准 <b>c</b></p>
+
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">① 难度调节</span><span class="badge" id="dprime-badge">d′ = 1.80</span></div>
+      <div class="slider-row"><span class="slider-tag">困难</span><input type="range" id="dprime-slider" min="0.5" max="3.5" step="0.1" value="1.8"><span class="slider-tag">简单</span></div>
+      <p class="hint">d′ 越小，语料越模棱两可，辨别难度越高。</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">② 试次数</span></div>
+      <div class="radio-row">
+        <label class="radio-card" data-trial="10"><input type="radio" name="trials" value="10"><span class="radio-body"><b>体验版</b><em>10 次 · 约 1.5 分钟</em></span></label>
+        <label class="radio-card" data-trial="20"><input type="radio" name="trials" value="20" checked><span class="radio-body"><b>课堂版</b><em>20 次 · 约 3 分钟</em></span></label>
+        <label class="radio-card" data-trial="100"><input type="radio" name="trials" value="100"><span class="radio-body"><b>课后长版</b><em>100 次 · 约 15 分钟</em></span></label>
+      </div>
+      <p class="hint">体验版适合首次试用或课堂演示；课堂版是标准配置；课后长版可得到更稳定的 d′ 估计。</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">③ 选择你的角色</span></div>
+      <div class="role-grid">
+        <button class="role-card" data-role="scam">
+          <span class="role-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="5" width="24" height="38" rx="5"/><line x1="19" y1="11" x2="29" y2="11"/><circle cx="24" cy="36" r="1.6" fill="currentColor" stroke="none"/><path d="M24 19 L24 27"/><circle cx="24" cy="31" r="1" fill="currentColor" stroke="none"/></svg></span>
+          <span class="role-name">诈骗信息识别</span><span class="role-desc">分辨正常短信与诈骗话术</span>
+        </button>
+        <button class="role-card" data-role="spam">
+          <span class="role-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="11" width="34" height="26" rx="4"/><path d="M7 15 L24 27 L41 15"/><circle cx="37" cy="13" r="6" fill="currentColor" stroke="none" opacity="0.55"/></svg></span>
+          <span class="role-name">垃圾邮件判断</span><span class="role-desc">分辨正常邮件与垃圾推广</span>
+        </button>
+        <button class="role-card" data-role="social">
+          <span class="role-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="9" width="32" height="30" rx="4"/><circle cx="18" cy="19" r="3.5"/><path d="M8 33 L18 25 L26 32 L34 24 L40 30"/><path d="M36 4 L39 9 L44 10 L40 14 L41 19 L36 17 L31 19 L32 14 L28 10 L33 9 Z" fill="currentColor" stroke="none"/></svg></span>
+          <span class="role-name">朋友圈鉴定</span><span class="role-desc">分辨真实分享与凡尔赛炫富</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel" style="border-color:rgba(255,200,87,.4);background:rgba(255,200,87,.05);margin-top:30px;">
+      <div class="panel-head">
+        <span class="panel-title" style="color:var(--amber);">🔬 概念实验室</span>
+        <span class="badge" style="background:rgba(255,200,87,.15);color:var(--amber);border-color:rgba(255,200,87,.4);">交互式演示</span>
+      </div>
+      <p class="hint" style="margin-top:0;margin-bottom:14px;">拖动滑块调整 d′ 和 c，观察两个分布、ROC 曲线、奖惩标准、机器学习指标和警觉衰退模拟。</p>
+      <button class="btn btn-primary" id="btn-open-concept" style="width:100%;background:linear-gradient(135deg,var(--amber),#d49420);color:#1a1204;">已进行试验，直接进入概念实验室</button>
+    </div>
+
+  </div>
+</section>
+
+<section class="screen" id="screen-concept">
+  <header class="topbar">
+    <div class="user-chip">
+      <span class="dot"></span>
+      <span class="user-chip-text">未登录</span>
+      <span class="admin-badge">🔧 管理员</span>
+    </div>
+    <button class="btn btn-ghost" id="btn-back-home">返回首页</button>
+  </header>
+  <div class="concept-wrap">
+    <div class="concept-header"><h2>概念实验室 · <span>交互式演示</span></h2></div>
+
+    <div class="concept-card" style="margin-bottom:20px;">
+      <div class="concept-slider-row"><label>敏感性 d′</label><input type="range" id="concept-dprime" min="0" max="4" step="0.1" value="1.5"><span class="val" id="concept-dprime-val">1.5</span></div>
+      <div class="concept-slider-row" style="margin-bottom:0;"><label>判定标准 c</label><input type="range" id="concept-c" min="-2" max="2" step="0.05" value="0"><span class="val" id="concept-c-val">0.00</span></div>
+    </div>
+
+    <div class="concept-tabs">
+      <button class="tab-btn active" data-tab="dist">两个分布</button>
+      <button class="tab-btn" data-tab="roc">ROC 曲线</button>
+      <button class="tab-btn" data-tab="payoff">标准与奖惩</button>
+      <button class="tab-btn" data-tab="ml">SDT 与机器学习</button>
+      <button class="tab-btn" data-tab="vigilance">警觉衰退模拟</button>
+    </div>
+
+    <div class="concept-panel active" id="panel-dist">
+      <div class="concept-card">
+        <h3>两个分布与判定标准</h3>
+        <canvas id="canvas-dist" class="concept-canvas"></canvas>
+        <div class="concept-info">d′ 决定两个分布的分离度；c 是判定阈值相对中点的偏移。拖动滑块实时观察。</div>
+      </div>
+    </div>
+
+    <div class="concept-panel" id="panel-roc">
+      <div class="concept-card">
+        <h3>ROC 曲线</h3>
+        <canvas id="canvas-roc" class="concept-canvas"></canvas>
+        <div class="concept-info">整条曲线由 d′ 决定；c 决定当前 (P(FA), P(H)) 在曲线上的位置。对角线代表随机猜测。</div>
+      </div>
+    </div>
+
+    <div class="concept-panel" id="panel-payoff">
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h3>先验概率与最优 β</h3>
+          <div class="concept-slider-row"><label>P(S) 信号先验</label><input type="range" id="concept-ps" min="0.01" max="0.99" step="0.01" value="0.5"><span class="val" id="concept-ps-val">0.50</span></div>
+          <div class="metric-grid" style="margin-top:16px;">
+            <div class="metric-box"><div class="label">P(S)</div><div class="value" id="val-ps">0.50</div></div>
+            <div class="metric-box"><div class="label">P(N)</div><div class="value" id="val-pn">0.50</div></div>
+            <div class="metric-box"><div class="label">最优 β</div><div class="value" id="val-beta-opt">1.00</div></div>
+            <div class="metric-box"><div class="label">当前 β</div><div class="value" id="val-beta-cur">1.00</div></div>
+          </div>
+          <div class="concept-info" style="margin-top:16px;">β<sub>opt</sub> = [P(N)/P(S)] × [V(CR) − V(FA)] / [V(H) − V(M)]</div>
+        </div>
+
+        <div class="concept-card">
+          <h3>支付矩阵（收益 / 损失）</h3>
+          <table class="payoff-table">
+            <thead><tr><th></th><th>说「有信号」</th><th>说「无信号」</th></tr></thead>
+            <tbody>
+              <tr><th>有信号</th><td><input type="number" id="pay-vh" value="1" step="0.5"></td><td><input type="number" id="pay-vm" value="-1" step="0.5"></td></tr>
+              <tr><th>无信号</th><td><input type="number" id="pay-vfa" value="-1" step="0.5"></td><td><input type="number" id="pay-vcr" value="1" step="0.5"></td></tr>
+            </tbody>
+          </table>
+          <div class="concept-info">输入收益（正数）或损失（负数）。例如：击中的收益 V(H)=1，漏报的损失 V(M)=−1。</div>
+        </div>
+      </div>
+      <div class="concept-card" style="margin-top:20px;">
+        <h3>当前 c 与最优 c 的位置对比</h3>
+        <canvas id="canvas-payoff" class="payoff-canvas"></canvas>
+        <div class="concept-info">金色标记是使期望收益最大化的最优 c<sub>opt</sub>；品红标记是你当前设置的 c。二者重合时，你的判断标准在收益意义上最优。</div>
+      </div>
+    </div>
+
+    <div class="concept-panel" id="panel-ml">
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h3>混淆矩阵（机器学习视角）</h3>
+          <div class="matrix-mini">
+            <div></div><div class="head">实际正例</div><div class="head">实际负例</div>
+            <div class="head">预测正例</div>
+            <div class="cell hit"><b id="ml-tp">0</b><span>TP</span></div>
+            <div class="cell fa"><b id="ml-fp">0</b><span>FP</span></div>
+            <div class="head">预测负例</div>
+            <div class="cell miss"><b id="ml-fn">0</b><span>FN</span></div>
+            <div class="cell cr"><b id="ml-tn">0</b><span>TN</span></div>
+          </div>
+          <div class="concept-info">将 SDT 的 H、FA、M、CR 映射为机器学习的 TP、FP、FN、TN。</div>
+        </div>
+        <div class="concept-card">
+          <h3>模型指标</h3>
+          <div class="metric-grid">
+            <div class="metric-box"><div class="label">Precision</div><div class="value" id="ml-precision">0.00</div></div>
+            <div class="metric-box"><div class="label">Recall</div><div class="value" id="ml-recall">0.00</div></div>
+            <div class="metric-box"><div class="label">F1</div><div class="value" id="ml-f1">0.00</div></div>
+            <div class="metric-box"><div class="label">Specificity</div><div class="value" id="ml-specificity">0.00</div></div>
+            <div class="metric-box"><div class="label">Accuracy</div><div class="value" id="ml-accuracy">0.00</div></div>
+            <div class="metric-box"><div class="label">AUC</div><div class="value" id="ml-auc">0.00</div></div>
+          </div>
+          <div class="concept-info" style="margin-top:16px;">拖动 d′ 和 c 观察各项指标变化。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-panel" id="panel-vigilance">
+      <div class="concept-card">
+        <h3>警觉衰退模拟（Mackworth 钟实验）</h3>
+        <p class="concept-info" style="margin-bottom:16px;">
+          模拟持续监控 2 小时（8 个 15 分钟时段，每时段 30 个信号 + 270 个噪声事件）。
+          d′ 和 c 按理论趋势变化，但每个时段的观测值都经过二项式采样，因此曲线会带有实验噪声。
+        </p>
+        <div class="checkbox-row">
+          <label><input type="checkbox" id="vig-dprime" checked> 敏感性下降：d′ 随时间降低（唤醒/资源理论）</label>
+          <label><input type="checkbox" id="vig-c" checked> 标准偏移：c 随时间升高（期望理论）</label>
+        </div>
+        <button class="btn btn-primary" id="btn-run-vig" style="margin-bottom:16px;">开始模拟</button>
+        <canvas id="canvas-vig" class="vigilance-chart"></canvas>
+        <div class="concept-info">实线是 d′（左轴），虚线是 c（右轴），点旁标注该时段的观测值。每次点击「开始模拟」都会得到一组新的带噪声曲线。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="screen-data">
+  <header class="topbar">
+    <div class="user-chip">
+      <span class="dot"></span>
+      <span class="user-chip-text">未登录</span>
+      <span class="admin-badge">🔧 管理员</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" id="btn-export-csv">⬇ 导出 CSV</button>
+      <button class="btn btn-ghost" id="btn-back-home-data">返回首页</button>
+    </div>
+  </header>
+  <div class="data-wrap">
+    <h2>数据管理 · <span id="data-title">所有被试记录</span></h2>
+    <p class="data-summary" id="data-summary">加载中…</p>
+    <div class="data-actions">
+      <button class="btn btn-ghost" id="btn-refresh-data">刷新</button>
+      <button class="btn btn-danger" id="btn-clear-all-data">清空全部数据</button>
+    </div>
+
+    <div class="data-sort-row" id="data-sort-row">
+      <span class="data-sort-label">排序：</span>
+      <button class="sort-btn active" data-sort="time">按时间</button>
+      <button class="sort-btn" data-sort="dprime-desc">d′ 降序</button>
+      <button class="sort-btn" data-sort="dprime-asc">d′ 升序</button>
+      <button class="sort-btn" data-sort="c-desc">c 降序</button>
+      <button class="sort-btn" data-sort="c-asc">c 升序</button>
+    </div>
+
+    <div class="data-roc-card">
+      <h3>全部记录的 ROC 空间散点图</h3>
+      <p class="data-roc-hint">横轴 P(FA)，纵轴 P(H)。每个点代表一条记录，颜色对应不同被试。点击任一散点可查看详情。</p>
+      <div class="data-roc-wrap">
+        <canvas id="canvas-data-roc"></canvas>
+        <div class="data-roc-tooltip" id="data-roc-tooltip"></div>
+      </div>
+      <div class="data-roc-legend" id="data-roc-legend"></div>
+    </div>
+
+    <div id="data-content"></div>
+  </div>
+</section>
+
+<section class="screen" id="screen-exp">
+  <header class="topbar">
+    <div class="scene-name" id="scene-name">诈骗信息识别 · 分辨正常短信与诈骗话术</div>
+    <div class="progress-chip" id="progress-chip">第 1 / 20 次</div>
+  </header>
+  <div class="exp-wrap">
+    <p class="instruction" id="instruction">阅读短信内容，判断这是诈骗信息还是正常消息</p>
+    <div class="stage-wrap" id="stage-wrap">
+      <canvas id="stage-canvas"></canvas>
+      <div class="stage-content" id="stage-content"></div>
+      <div class="stage-overlay" id="stage-overlay"><span id="overlay-text">准备…</span></div>
+      <div class="feedback-flash" id="feedback-flash"></div>
+    </div>
+    <div class="live-stats">
+      <span class="stat-pill hit">击中 <b id="live-hit">0</b></span>
+      <span class="stat-pill fa">误报 <b id="live-fa">0</b></span>
+      <span class="stat-pill trial">进度 <b id="live-trial">0 / 20</b></span>
+    </div>
+    <div class="answer-row" id="answer-row">
+      <button class="btn btn-signal" id="btn-signal" disabled>是诈骗</button>
+      <button class="btn btn-noise" id="btn-noise" disabled>正常消息</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="screen-result">
+  <header class="topbar">
+    <div class="user-chip">
+      <span class="dot"></span>
+      <span class="user-chip-text">未登录</span>
+      <span class="admin-badge">🔧 管理员</span>
+    </div>
+    <button class="btn btn-ghost" id="btn-home-2">返回首页</button>
+  </header>
+  <div class="result-wrap">
+    <h2 class="result-title">实验完成 · <span id="result-role">诈骗信息识别</span></h2>
+    <p class="result-meta" id="result-meta">共 20 试次 · 设定 d′ = 1.80</p>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">混淆矩阵</span></div>
+      <div class="matrix">
+        <div></div><div class="matrix-head">实际有信号</div><div class="matrix-head">实际无信号</div>
+        <div class="matrix-head row-head">判断「有」</div>
+        <div class="cell cell-hit" id="cell-H"><b>0</b><span>击中 H</span></div>
+        <div class="cell cell-fa" id="cell-FA"><b>0</b><span>误报 FA</span></div>
+        <div class="matrix-head row-head">判断「无」</div>
+        <div class="cell cell-miss" id="cell-M"><b>0</b><span>漏报 M</span></div>
+        <div class="cell cell-cr" id="cell-CR"><b>0</b><span>正确拒绝 CR</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">核心指标</span></div>
+      <div class="metrics">
+        <div class="metric"><span class="metric-label">击中率 P(H)</span><span class="metric-value" id="m-ph">—</span></div>
+        <div class="metric"><span class="metric-label">误报率 P(FA)</span><span class="metric-value" id="m-pfa">—</span></div>
+        <div class="metric metric-main"><span class="metric-label">辨别力指数 d′</span><span class="metric-value big" id="m-dprime">—</span></div>
+        <div class="metric metric-main"><span class="metric-label">判断标准 c</span><span class="metric-value big" id="m-c">—</span></div>
+        <div class="metric"><span class="metric-label">准确率</span><span class="metric-value" id="m-acc">—</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">历史数据对比（本学号）</span><button class="btn btn-mini" id="btn-clear">清空我的历史</button></div>
+      <p class="chart-cap">各局次 d′（柱）与 c（折线）</p>
+      <canvas id="chart-history" class="chart"></canvas>
+      <p class="chart-cap">ROC 空间散点（横轴 P(FA)，纵轴 P(H)）</p>
+      <canvas id="chart-roc" class="chart"></canvas>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-primary" id="btn-again">再来一局</button>
+      <button class="btn btn-ghost" id="btn-home-3">返回首页</button>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function () {
+'use strict';
+
+/* ============================================================
+   0. 语料库 —— 每 level 8 条
+   ============================================================ */
+var CORPUS = {
+  scam: {
+    signal: [
+      {level:1,sender:'+86 400-1001-01',text:'您的快递因地址不详暂存网点，请回复姓名和电话以便重新派送。'},
+      {level:1,sender:'+86 400-1001-02',text:'您的话费积分将于月底清零，回复"兑换"可领取礼品。'},
+      {level:1,sender:'+86 400-1001-03',text:'您的宽带账户即将到期，回复"续费"即可享受优惠。'},
+      {level:1,sender:'+86 400-1001-04',text:'您的订单因库存不足需要退款，请回复"退款"确认。'},
+      {level:1,sender:'+86 400-1001-05',text:'您的会员即将到期，回复"续费"可继续享受权益。'},
+      {level:1,sender:'+86 400-1001-06',text:'您的包裹派送失败，请回复地址以便重新安排。'},
+      {level:1,sender:'+86 400-1001-07',text:'您的手机号在异地登录，回复"Y"确认是本人操作。'},
+      {level:1,sender:'+86 400-1001-08',text:'您的信用卡账单已出，回复"账单"查看本期明细。'},
+      {level:2,sender:'+86 400-2002-01',text:'【XX银行】您的账户存在异常，请点击链接进行身份验证。'},
+      {level:2,sender:'+86 400-2002-02',text:'您有一笔订单需要确认收货地址，点击链接填写。'},
+      {level:2,sender:'+86 400-2002-03',text:'您的账户出现异常消费，请点击链接核实。'},
+      {level:2,sender:'+86 400-2002-04',text:'您的会员即将到期，点击链接续费可享8折优惠。'},
+      {level:2,sender:'+86 400-2002-05',text:'您的包裹在运输中丢失，请点击链接申请理赔。'},
+      {level:2,sender:'+86 400-2002-06',text:'您的手机套餐即将调整，点击链接查看详情并确认。'},
+      {level:2,sender:'+86 400-2002-07',text:'您的账户需完成实名认证，点击链接上传身份证照片。'},
+      {level:2,sender:'+86 400-2002-08',text:'您的订单支付失败，请点击链接重新支付。'},
+      {level:3,sender:'+86 400-3003-01',text:'您有一笔退款待领取，点击 http://t.cn/xxx 处理。'},
+      {level:3,sender:'+86 400-3003-02',text:'尊敬的用户，您的话费已不足，点击链接快速充值享8折。'},
+      {level:3,sender:'+86 400-3003-03',text:'您的银行卡即将停用，请点击链接更新身份信息。'},
+      {level:3,sender:'+86 400-3003-04',text:'您的淘宝订单可以退款了，请点击链接填写银行卡信息。'},
+      {level:3,sender:'+86 400-3003-05',text:'您的信用卡可以提额了，点击链接申请，最高可提10万。'},
+      {level:3,sender:'+86 400-3003-06',text:'您的游戏账号被封，请点击链接申诉解封。'},
+      {level:3,sender:'+86 400-3003-07',text:'您的视频会员可免费领取，点击链接激活。'},
+      {level:3,sender:'+86 400-3003-08',text:'您的社保账户异常，点击链接核实信息。'},
+      {level:4,sender:'+86 400-4004-01',text:'【紧急】您的社保卡即将停用，请24小时内点击链接激活，否则后果自负。'},
+      {level:4,sender:'+86 400-4004-02',text:'您的银行卡涉嫌洗钱，请立即点击链接配合调查，否则将冻结账户。'},
+      {level:4,sender:'+86 400-4004-03',text:'【最后通知】您的账户将在24小时后注销，点击链接保留账户。'},
+      {level:4,sender:'+86 400-4004-04',text:'您有一笔可疑交易，请立即点击链接确认，否则账户将被冻结。'},
+      {level:4,sender:'+86 400-4004-05',text:'【紧急】您的身份证信息被冒用，请点击链接立即处理。'},
+      {level:4,sender:'+86 400-4004-06',text:'【警告】您的账户存在违法行为，请立即点击链接配合调查。'},
+      {level:4,sender:'+86 400-4004-07',text:'【紧急】您的医保卡已停用，点击链接立即激活。'},
+      {level:4,sender:'+86 400-4004-08',text:'您的车辆有违章未处理，点击链接缴费，逾期将影响征信。'},
+      {level:5,sender:'+86 400-5005-01',text:'恭喜您被抽中为幸运用户！点击链接领取iPhone，仅限今日！'},
+      {level:5,sender:'+86 400-5005-02',text:'您中奖了！一等奖现金50000元，请添加客服QQ领取，过期作废。'},
+      {level:5,sender:'+86 400-5005-03',text:'恭喜您获得XX平台幸运大奖，点击链接填写信息即可领取。'},
+      {level:5,sender:'+86 400-5005-04',text:'您已成为我们的幸运用户，点击链接领取8888元红包。'},
+      {level:5,sender:'+86 400-5005-05',text:'恭喜您获得免费旅游名额，点击链接填写信息即可出行。'},
+      {level:5,sender:'+86 400-5005-06',text:'您中奖了！点击链接领取最新款手机，仅剩3个名额！'},
+      {level:5,sender:'+86 400-5005-07',text:'恭喜您获得VIP会员资格，点击链接立即激活，价值9999元。'},
+      {level:5,sender:'+86 400-5005-08',text:'您被选中为幸运观众，点击链接领取5000元现金大奖。'}
+    ],
+    noise: [
+      {level:1,sender:'106-1001-01',text:'【顺丰】您的快递已到丰巢柜，取件码8823，请及时领取。'},
+      {level:1,sender:'106-1001-02',text:'您的快递已到达菜鸟驿站，请凭取件码领取。'},
+      {level:1,sender:'106-1001-03',text:'【中通】您的包裹已到小区快递柜，取件码123456。'},
+      {level:1,sender:'106-1001-04',text:'【韵达】您的快递已放在门卫处，请注意查收。'},
+      {level:1,sender:'106-1001-05',text:'【圆通】您的包裹已投递至快递柜，请及时取件。'},
+      {level:1,sender:'106-1001-06',text:'【京东物流】您的包裹正在派送中，预计今日送达。'},
+      {level:1,sender:'106-1001-07',text:'【EMS】您的快递已到达指定网点，请凭身份证领取。'},
+      {level:1,sender:'106-1001-08',text:'【菜鸟】您有2个包裹已到达驿站，请及时领取。'},
+      {level:2,sender:'106-2002-01',text:'【中国银行】您尾号1234的账户消费100.00元。'},
+      {level:2,sender:'106-2002-02',text:'【美团】您的外卖订单已送达，感谢使用。'},
+      {level:2,sender:'106-2002-03',text:'【工商银行】您尾号5678的账户存入工资5000元。'},
+      {level:2,sender:'106-2002-04',text:'【支付宝】您的花呗账单已出，请按时还款。'},
+      {level:2,sender:'106-2002-05',text:'【建设银行】您尾号9012的账户支出200元。'},
+      {level:2,sender:'106-2002-06',text:'【微信支付】您已支付88元，商户：全家便利店。'},
+      {level:2,sender:'106-2002-07',text:'【招商银行】您尾号3456的信用卡还款成功。'},
+      {level:2,sender:'106-2002-08',text:'【农业银行】您尾号7890的账户收到转账1000元。'},
+      {level:3,sender:'106-3003-01',text:'【淘宝】您购买的商品已发货，物流单号SF123456。'},
+      {level:3,sender:'106-3003-02',text:'【京东】您的订单已出库，预计明天送达。'},
+      {level:3,sender:'106-3003-03',text:'【拼多多】您的订单已发货，请注意查收。'},
+      {level:3,sender:'106-3003-04',text:'【天猫】您购买的商品已发出，点击查看物流。'},
+      {level:3,sender:'106-3003-05',text:'【小红书】您的商品已发货，预计3天内送达。'},
+      {level:3,sender:'106-3003-06',text:'【唯品会】您的订单已发出，物流信息已更新。'},
+      {level:3,sender:'106-3003-07',text:'【苏宁】您的商品正在派送中，请保持电话畅通。'},
+      {level:3,sender:'106-3003-08',text:'【网易严选】您的订单已发货，感谢您的购买。'},
+      {level:4,sender:'106-4004-01',text:'【验证码】您的验证码是123456，5分钟内有效。'},
+      {level:4,sender:'106-4004-02',text:'【支付宝】您有一笔收款100元已到账。'},
+      {level:4,sender:'106-4004-03',text:'【验证码】您的登录验证码是456789，请勿泄露。'},
+      {level:4,sender:'106-4004-04',text:'【微信】您的支付验证码是654321，10分钟内有效。'},
+      {level:4,sender:'106-4004-05',text:'【银行】您的动态密码是112233，请勿转发他人。'},
+      {level:4,sender:'106-4004-06',text:'【验证码】您的注册验证码为778899，请尽快使用。'},
+      {level:4,sender:'106-4004-07',text:'【支付宝】您收到一笔转账200元。'},
+      {level:4,sender:'106-4004-08',text:'【微信】您收到红包18.88元。'},
+      {level:5,sender:'106-5005-01',text:'【中国移动】您本月话费50元，余额30元。'},
+      {level:5,sender:'106-5005-02',text:'【反诈中心】提醒您：未知链接不点击，陌生来电不轻信。'},
+      {level:5,sender:'106-5005-03',text:'【中国联通】您本月套餐流量已用80%，请注意使用。'},
+      {level:5,sender:'106-5005-04',text:'【国家电网】您本月电费100元已缴纳成功。'},
+      {level:5,sender:'106-5005-05',text:'【中国电信】您本月宽带账单已出，请按时缴费。'},
+      {level:5,sender:'106-5005-06',text:'【气象台】明日气温下降8度，请注意保暖。'},
+      {level:5,sender:'106-5005-07',text:'【交警】您的车辆年检即将到期，请及时办理。'},
+      {level:5,sender:'106-5005-08',text:'【社区】本周六上午有免费体检活动，欢迎参加。'}
+    ]
+  },
+  spam: {
+    signal: [
+      {level:1,from:'promo@shop-recommend.com',subject:'您关注的店铺上新了',text:'您关注的店铺上新了，部分商品低至5折，欢迎选购。'},
+      {level:1,from:'member@xx-mall.com',subject:'会员日特惠',text:'【XX商城】会员日特惠，全场满199减50，期待您的光临。'},
+      {level:1,from:'news@brand-store.com',subject:'新品尝鲜',text:'新品尝鲜，全场8折优惠，欢迎前来选购。'},
+      {level:1,from:'sale@season-shop.com',subject:'双十一预热开启',text:'双十一预热开启，部分商品提前享受优惠。'},
+      {level:1,from:'cart@shop-online.com',subject:'购物车提醒',text:'您的购物车商品即将下架，现在下单享9折。'},
+      {level:1,from:'price@watch-list.com',subject:'商品降价通知',text:'您收藏的商品降价了，点击查看最新价格。'},
+      {level:1,from:'newuser@mall.com',subject:'新用户专享',text:'新用户专享，首单立减20元。'},
+      {level:1,from:'brand@flagship.com',subject:'新品首发',text:'【品牌旗舰店】新品首发，前100名下单享7折。'},
+      {level:2,from:'flash@deal-now.com',subject:'限时抢购',text:'限时抢购！今日下单享额外9折优惠，仅限前100名。'},
+      {level:2,from:'coupon@vip-offer.com',subject:'您的专属优惠券',text:'您的专属优惠券即将过期，点击链接领取，不要错过。'},
+      {level:2,from:'sale24@hourdeal.com',subject:'24 小时限时特惠',text:'24小时限时特惠，全场满300减100。'},
+      {level:2,from:'carnival@11-11.com',subject:'双十一狂欢',text:'双十一狂欢，部分商品低至3折，速来抢购。'},
+      {level:2,from:'last@chance.com',subject:'最后 3 小时',text:'最后3小时！错过再等一年，点击立即抢购。'},
+      {level:2,from:'vip@member-day.com',subject:'会员专享日',text:'会员专享日，全场折扣叠加使用。'},
+      {level:2,from:'discount@vip.com',subject:'VIP 折扣更新',text:'您的VIP专属折扣已更新，点击查看。'},
+      {level:2,from:'bogo@time-limited.com',subject:'限时福利',text:'限时福利，买一送一，仅限今日。'},
+      {level:3,from:'lucky@prize-draw.xyz',subject:'恭喜获得抽奖资格',text:'恭喜您获得抽奖资格！点击链接参与，100%中奖，机会难得。'},
+      {level:3,from:'free@course-gift.top',subject:'免费领取课程',text:'免费领取价值999元的课程，名额有限，先到先得！'},
+      {level:3,from:'survey@free-gift.top',subject:'参与问卷领奖',text:'参与问卷调查，免费获得精美礼品一份。'},
+      {level:3,from:'draw@win-prize.xyz',subject:'幸运抽奖资格',text:'恭喜您获得幸运抽奖资格，点击参与赢取大奖。'},
+      {level:3,from:'trial@new-product.top',subject:'免费试用新品',text:'免费试用新品，名额仅限100名，速来报名。'},
+      {level:3,from:'cash@survey-reward.top',subject:'问卷领现金',text:'填写问卷即可领取10元现金红包。'},
+      {level:3,from:'vip@free-vip.xyz',subject:'限时免费 VIP',text:'限时免费领取VIP会员，点击立即激活。'},
+      {level:3,from:'anniv@prize-pool.xyz',subject:'周年庆抽奖',text:'恭喜您获得周年庆抽奖资格，点击参与。'},
+      {level:4,from:'alert@security-check.tk',subject:'【紧急】账户异常',text:'【紧急】您的账户异常，请点击链接验证身份，否则将冻结。'},
+      {level:4,from:'secret@rich-way.xyz',subject:'独家揭秘',text:'独家揭秘！月入10万的秘密，点击了解详情，仅限今日。'},
+      {level:4,from:'final@notice.tk',subject:'【最后通知】',text:'【最后通知】您的VIP权益即将失效，点击立即续费。'},
+      {level:4,from:'risk@account.tk',subject:'安全风险等级过高',text:'您的账户安全风险等级过高，请立即点击处理。'},
+      {level:4,from:'storage@mail.tk',subject:'【紧急】邮箱已满',text:'【紧急】您的邮箱存储已满，点击链接立即扩容。'},
+      {level:4,from:'expire@vip.tk',subject:'【最后提醒】即将到期',text:'【最后提醒】您的会员将于今日到期，点击续费。'},
+      {level:4,from:'warn@login.tk',subject:'【警告】异常登录',text:'【警告】您的账户存在异常登录，点击立即处理。'},
+      {level:4,from:'destroy@account.tk',subject:'账户即将注销',text:'您的账户将在24小时后注销，点击链接保留。'},
+      {level:5,from:'winner@million-prize.tk',subject:'恭喜中奖100万美元',text:'恭喜您中奖100万美元！请提供银行账户信息以便我们安排转账。'},
+      {level:5,from:'admin@iphone-giveaway.top',subject:'您中奖了',text:'您的邮箱中奖了，点击链接填写信息即可领取iPhone！'},
+      {level:5,from:'lucky@cash-reward.tk',subject:'幸运用户奖励',text:'恭喜您成为我们的幸运用户，获得10000元现金奖励。'},
+      {level:5,from:'winner@big-prize.tk',subject:'邮箱中奖通知',text:'您的邮箱已被选中，点击链接领取8888元大奖。'},
+      {level:5,from:'trip@travel-prize.tk',subject:'海外旅游大奖',text:'恭喜您获得海外旅游大奖，填写信息即可出行。'},
+      {level:5,from:'ipad@mail-prize.tk',subject:'中奖 iPad',text:'您的邮箱中奖了，点击链接领取最新款iPad。'},
+      {level:5,from:'millions@jackpot.tk',subject:'头奖 100 万',text:'恭喜您中得头奖100万元，请尽快提供收款信息。'},
+      {level:5,from:'macbook@winner.tk',subject:'幸运用户',text:'您已被选为幸运用户，点击链接领取苹果笔记本。'}
+    ],
+    noise: [
+      {level:1,from:'colleague@company.com',subject:'文件打不开',text:'你昨天发我的文件打不开，能重新发一下吗？'},
+      {level:1,from:'hr@company.com',subject:'团建安排',text:'公司团建定在下周五，你有空参加吗？'},
+      {level:1,from:'pm@company.com',subject:'会议室变更',text:'会议室改到3楼了，记得准时参加。'},
+      {level:1,from:'teammate@company.com',subject:'方案请求',text:'你上次说的那个方案，能发我一份吗？'},
+      {level:1,from:'friend@company.com',subject:'中午一起吃饭',text:'中午一起吃饭吗？楼下新开了一家。'},
+      {level:1,from:'colleague2@company.com',subject:'请假通知',text:'我下午请假，有事明天再说。'},
+      {level:1,from:'manager@company.com',subject:'周报提交',text:'周报记得今天下班前提交。'},
+      {level:1,from:'deskmate@company.com',subject:'找文件',text:'你看到我放在桌上的文件了吗？'},
+      {level:2,from:'manager@company.com',subject:'本月工作总结',text:'这是本月的部门工作总结，请查收，有问题随时沟通。'},
+      {level:2,from:'pm@company.com',subject:'新项目排期',text:'关于新项目的排期，大家有什么建议？欢迎回复讨论。'},
+      {level:2,from:'assistant@company.com',subject:'本周工作计划',text:'附件是本周的工作计划，请查收。'},
+      {level:2,from:'cs@company.com',subject:'客户反馈',text:'客户反馈已经汇总，请查阅并回复。'},
+      {level:2,from:'manager2@company.com',subject:'Q2 目标会议',text:'下周一上午10点开会讨论Q2目标。'},
+      {level:2,from:'finance@company.com',subject:'季度预算',text:'这是本季度的预算表，请核对后反馈。'},
+      {level:2,from:'product@company.com',subject:'迭代方案',text:'关于产品迭代方案，请提出你的意见。'},
+      {level:2,from:'sales@company.com',subject:'月度销售数据',text:'附件是上个月的销售数据，请查阅。'},
+      {level:3,from:'assistant@company.com',subject:'会议提醒',text:'记得下午3点有部门会议，会议室在3楼。'},
+      {level:3,from:'cs@company.com',subject:'客户反馈汇总',text:'附件是客户反馈汇总，请及时查看并回复。'},
+      {level:3,from:'hr@company.com',subject:'面试安排',text:'明天上午9点面试，请准时到会议室。'},
+      {level:3,from:'front-desk@company.com',subject:'快递代收',text:'你的快递到了，放在前台。'},
+      {level:3,from:'manager@company.com',subject:'月度总结提醒',text:'下周三记得提交月度总结。'},
+      {level:3,from:'qa@company.com',subject:'测试报告提醒',text:'今天下班前请把测试报告发我。'},
+      {level:3,from:'colleague@company.com',subject:'紧急问题',text:'有个紧急问题需要讨论，方便的话回个电话。'},
+      {level:3,from:'assistant2@company.com',subject:'会议室预订',text:'会议室已经订好了，下午2点。'},
+      {level:4,from:'colleague@company.com',subject:'回复',text:'收到，谢谢！'},
+      {level:4,from:'colleague2@company.com',subject:'回复',text:'好的，我明天处理。'},
+      {level:4,from:'pm@company.com',subject:'回复',text:'收到，马上跟进。'},
+      {level:4,from:'teammate@company.com',subject:'回复',text:'好的，没问题。'},
+      {level:4,from:'manager@company.com',subject:'回复',text:'收到，稍后回复。'},
+      {level:4,from:'assistant@company.com',subject:'回复',text:'明白，这就去做。'},
+      {level:4,from:'hr@company.com',subject:'回复',text:'好的，谢谢提醒。'},
+      {level:4,from:'colleague3@company.com',subject:'回复',text:'收到，辛苦了。'},
+      {level:5,from:'boss@company.com',subject:'会议安排',text:'本周五下午2点，3号会议室，讨论Q3预算。'},
+      {level:5,from:'teammate@company.com',subject:'测试报告',text:'请把上周的测试报告发我一份，谢谢。'},
+      {level:5,from:'pm@company.com',subject:'项目启动会',text:'明天上午10点开项目启动会。'},
+      {level:5,from:'legal@company.com',subject:'合同签署',text:'请查收附件中的合同，需要你签字。'},
+      {level:5,from:'hr@company.com',subject:'团建通知',text:'本周五团建，请大家提前安排时间。'},
+      {level:5,from:'hr2@company.com',subject:'入职培训',text:'关于新员工入职培训的通知，详情见附件。'},
+      {level:5,from:'manager@company.com',subject:'月度总结',text:'请各位同事在周五前提交本月工作总结。'},
+      {level:5,from:'admin2@company.com',subject:'考勤制度',text:'下周一开始执行新的考勤制度。'}
+    ]
+  },
+  social: {
+    signal: [
+      {level:1,user:'Sunny_Life',text:'今天在家办公，书房窗外就是海景，工作效率反而变低了。'},
+      {level:1,user:'Quiet_Home',text:'昨天请了个阿姨来打扫，家里太大了，一个人实在忙不过来。'},
+      {level:1,user:'Garden_Diary',text:'早上在自家花园里剪了几支玫瑰，随手插瓶就很好看。'},
+      {level:1,user:'Sea_View',text:'楼下新开了家咖啡馆，散步过去只要五分钟，就是有点吵。'},
+      {level:1,user:'Wardrobe_Log',text:'天气转凉，把衣帽间的衣服换季整理了一下，好累。'},
+      {level:1,user:'Mountain_Foot',text:'早上被鸟叫吵醒，住在山脚下就是这点不好。'},
+      {level:1,user:'Home_Gym',text:'今天请私教来家里上课，客厅腾出来当健身房还挺合适。'},
+      {level:1,user:'Wine_Cellar',text:'整理了一下酒窖，发现有几瓶年份不太对了，有点可惜。'},
+      {level:2,user:'Bag_Lover',text:'老公送的项链，说是随便挑的，我一看价格吓了一跳。'},
+      {level:2,user:'Treat_Yourself',text:'偶尔也要奖励一下自己，今天又没忍住。'},
+      {level:2,user:'New_Perfume',text:'新入的香水味道很特别，闺蜜说很适合我。'},
+      {level:2,user:'Weekend_SPA',text:'周末去做了个SPA，顺便买了点护肤品，一不小心又超预算了。'},
+      {level:2,user:'Watch_Log',text:'新买的表戴了两天，朋友说很衬我的肤色。'},
+      {level:2,user:'New_Dress',text:'今天试了试新买的裙子，效果还不错，就是有点长。'},
+      {level:2,user:'Shoe_Addict',text:'又买了几双鞋，鞋柜实在放不下了，得换个大的。'},
+      {level:2,user:'Sunglasses_Day',text:'新入的墨镜很百搭，出门随手就戴。'},
+      {level:3,user:'New_Car_Owner',text:'老公说换辆大点的车方便带娃，于是就有了它。'},
+      {level:3,user:'Moved_In',text:'从市区搬到郊区，房子大了，通勤远了。'},
+      {level:3,user:'House_Warming',text:'新房装修好了，邀请朋友们来家里做客。'},
+      {level:3,user:'Two_Cars',text:'家里多了一台车，停车位有点紧张了。'},
+      {level:3,user:'SUV_Upgrade',text:'换了辆SUV，后排空间大，带孩子出门方便多了。'},
+      {level:3,user:'Moving_Day',text:'搬家真的好累，东西太多了，光衣服就装了十几个箱子。'},
+      {level:3,user:'New_Garden',text:'新家院子里种了几棵树，希望明年能开花。'},
+      {level:3,user:'Second_Fridge',text:'新家厨房够大，终于能把第二个冰箱搬进去了。'},
+      {level:4,user:'Gift_From_Husband',text:'老公非要买这个包给我，说生日礼物不能太随意，我都说不用了。'},
+      {level:4,user:'Full_Payment',text:'婆婆非要给我买块表，说女孩子要对自己好一点。'},
+      {level:4,user:'Anniversary_Gift',text:'老公说这次周年礼物不许再退了，打开盒子我沉默了。'},
+      {level:4,user:'House_Hunting',text:'陪闺蜜去看房，结果我自己先定了一套。'},
+      {level:4,user:'Random_Watch',text:'随手买了块表，销售说这是限量款，我也不太懂。'},
+      {level:4,user:'Surprise_Gift',text:'老公说要给我个惊喜，结果是把家里的车都换了。'},
+      {level:4,user:'Small_Apartment',text:'本来只想买个小公寓，销售一推荐就全款买了套大的。'},
+      {level:4,user:'Long_Wanted',text:'周年纪念日，老公送了我念叨很久的包，终于不用假装不想要了。'},
+      {level:5,user:'Porsche_Owner',text:'新提的保时捷，就是停车有点麻烦。'},
+      {level:5,user:'House_Collector',text:'今天又买了一套房，税好高，心疼。'},
+      {level:5,user:'Wife_Upgrade',text:'老公非要给我换车，我说现在这辆还能开，他说配不上我。'},
+      {level:5,user:'Bag_Addict',text:'又买了个包，家里的衣帽间实在放不下了。'},
+      {level:5,user:'Smooth_Sale',text:'全款买了辆车，销售说我是他见过最爽快的客户。'},
+      {level:5,user:'Watch_Collector',text:'老公说家里的表太多了，让我随便挑一块，我挑了个最便宜的。'},
+      {level:5,user:'Villa_Offer',text:'今天去看了套别墅，销售说已经有人出价了，我直接加价拿下。'},
+      {level:5,user:'Third_House',text:'刚买了第三套房，中介说我是他见过最有实力的客户。'}
+    ],
+    noise: [
+      {level:1,user:'Overtime_Diary',text:'今天加班到很晚，终于把方案改完了。'},
+      {level:1,user:'Get_Well_Soon',text:'感冒了，大家注意身体。'},
+      {level:1,user:'Tired_Day',text:'最近有点累，需要好好休息一下。'},
+      {level:1,user:'Mood_Low',text:'今天心情不太好，想找个人聊聊。'},
+      {level:1,user:'Month_End',text:'又到了月底，工作压力有点大。'},
+      {level:1,user:'Criticized',text:'今天被领导批评了，有点沮丧。'},
+      {level:1,user:'Sleepless',text:'最近失眠，希望早点好起来。'},
+      {level:1,user:'Rainy_Mood',text:'今天下雨，有点想念晴天。'},
+      {level:2,user:'Hiking_Life',text:'周末去爬山了，风景不错，就是腿有点酸。'},
+      {level:2,user:'Baking_First',text:'第一次做蛋糕，卖相一般但味道还不错。'},
+      {level:2,user:'Library_Day',text:'今天去了图书馆，看了一下午的书。'},
+      {level:2,user:'Binge_Watch',text:'周末在家追剧，一口气看了十集。'},
+      {level:2,user:'Morning_Run',text:'早上跑步遇见了日出，很治愈。'},
+      {level:2,user:'Park_Walk',text:'今天去公园散步，遇到一只可爱的小狗。'},
+      {level:2,user:'Flower_Market',text:'周末去了趟花市，买了几盆绿植。'},
+      {level:2,user:'Home_Cook',text:'今天在家做了一顿饭，味道还行。'},
+      {level:3,user:'Hotpot_Night',text:'和朋友约了顿火锅，聊到打烊。'},
+      {level:3,user:'Movie_Fan',text:'看了场电影，推荐大家去看。'},
+      {level:3,user:'Old_Classmates',text:'今天和老同学聚餐，很久没见了。'},
+      {level:3,user:'Seaside_Trip',text:'周末和朋友去了趟海边，很放松。'},
+      {level:3,user:'Shopping_Friend',text:'今天和闺蜜逛街，逛了一下午。'},
+      {level:3,user:'Cook_Together',text:'和朋友一起做了顿晚饭，很有成就感。'},
+      {level:3,user:'Live_Show',text:'今晚去看了场live演出，很嗨。'},
+      {level:3,user:'Camping_Weekend',text:'周末和朋友一起去露营了。'},
+      {level:4,user:'Paper_Done',text:'终于把拖了很久的论文初稿写完了，开心。'},
+      {level:4,user:'Help_Neighbor',text:'今天帮邻居搬了东西，感觉自己还挺有用。'},
+      {level:4,user:'License_Passed',text:'终于通过了驾照考试，开心！'},
+      {level:4,user:'Feed_Cat',text:'今天给流浪猫喂了食，希望它好好活着。'},
+      {level:4,user:'Half_Marathon',text:'今天完成了第一次半程马拉松，很有成就感。'},
+      {level:4,user:'Cook_Praised',text:'第一次做的菜被家人夸了，很开心。'},
+      {level:4,user:'Help_Colleague',text:'今天帮同事解决了一个难题，挺有成就感的。'},
+      {level:4,user:'Early_Riser',text:'坚持早起一个月了，感觉自己有进步。'},
+      {level:5,user:'Rainy_Reading',text:'下雨了，听着雨声看书，很惬意。'},
+      {level:5,user:'Cat_Feeding',text:'早上跑步遇到一只流浪猫，喂了它一点吃的。'},
+      {level:5,user:'Simple_Noodles',text:'今天在家煮了碗面，简单但满足。'},
+      {level:5,user:'Star_Evening',text:'晚上散步看到星星，心情很好。'},
+      {level:5,user:'Good_Book',text:'今天看了本好书，推荐给大家。'},
+      {level:5,user:'Weekend_Nap',text:'周末在家睡了个懒觉，很幸福。'},
+      {level:5,user:'Good_Coffee',text:'今天喝了杯好咖啡，心情不错。'},
+      {level:5,user:'Evening_Walk',text:'傍晚在小区里散步，很安静。'}
+    ]
+  }
+};
+
+var ROLES = {
+  scam: { name:'诈骗信息识别', scene:'诈骗信息识别 · 分辨正常短信与诈骗话术', instruction:'阅读短信内容，判断这是诈骗信息还是正常消息', yes:'是诈骗', no:'正常消息', hitText:'正确拦截', missText:'漏拦', accent:'#2ee6c4', accentRgb:'46,230,196', bodyClass:'role-scam' },
+  spam: { name:'垃圾邮件判断', scene:'垃圾邮件判断 · 分辨正常邮件与垃圾推广', instruction:'阅读邮件内容，判断这是垃圾邮件还是正常邮件', yes:'是垃圾邮件', no:'正常邮件', hitText:'正确拦截', missText:'漏拦', accent:'#ff4d9d', accentRgb:'255,77,157', bodyClass:'role-spam' },
+  social: { name:'朋友圈鉴定', scene:'朋友圈鉴定 · 分辨真实分享与凡尔赛炫富', instruction:'浏览这条朋友圈，判断是真实分享还是刻意炫富', yes:'是炫富', no:'真实分享', hitText:'正确识别', missText:'没看出来', accent:'#ffc857', accentRgb:'255,200,87', bodyClass:'role-social' }
+};
+
+var READY_MS = 700, FB_MS = 800, MAX_RECORDS = 30;
+
+/* ============================================================
+   1. 数学工具
+   ============================================================ */
+function zFromP(p) {
+  if (typeof p !== 'number' || !isFinite(p)) return 0;
+  if (p <= 0) p = 1e-12;
+  if (p >= 1) p = 1 - 1e-12;
+  var a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  var b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+  var c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  var d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  var P_LOW=0.02425, P_HIGH=1-P_LOW, q, r;
+  if (p < P_LOW) { q=Math.sqrt(-2*Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+  if (p <= P_HIGH) { q=p-0.5; r=q*q; return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1); }
+  q = Math.sqrt(-2*Math.log(1-p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+}
+function pFromZ(z) { return 0.5 * (1 + erf(z / Math.SQRT2)); }
+function erf(x) {
+  var sign = x >= 0 ? 1 : -1; x = Math.abs(x);
+  var a1=0.254829592, a2=-0.284496736, a3=1.421413741;
+  var a4=-1.453152027, a5=1.061405429, p=0.3275911;
+  var t = 1.0 / (1.0 + p * x);
+  var y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+  return sign * y;
+}
+function normalPDF(x, mu, sigma) {
+  var d = (x - mu) / sigma;
+  return Math.exp(-0.5*d*d) / (sigma * Math.sqrt(2*Math.PI));
+}
+function clamp(x, lo, hi) { return x < lo ? lo : (x > hi ? hi : x); }
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+/* ============================================================
+   2. 状态
+   ============================================================ */
+var state = {
+  user: null, role: 'scam', dprimeSetting: 1.8, totalTrials: 20, phase: 'idle',
+  counts: { H:0, M:0, FA:0, CR:0 }, trial: null, _trialForScore: null, locked: true,
+  results: null, usedIndices: { signal:{}, noise:{} },
+  isAdmin: false,
+  trialSequence: null,
+  trialIndex: 0
+};
+var runId = 0;
+var conceptState = {
+  dprime: 1.5, c: 0, ps: 0.5,
+  payoffs: { VH: 1, VM: -1, VFA: -1, VCR: 1 },
+  vigilance: { data: [] }
+};
+var dataSortMode = 'time';
+var dataROCPoints = [];
+
+/* ============================================================
+   3. 存储
+   ============================================================ */
+var STORAGE_ACTIVE = 'sdt_active_user_v16', STORAGE_DB = 'sdt_users_db_v16';
+function loadActiveUser() { try { var raw = localStorage.getItem(STORAGE_ACTIVE); if (!raw) return null; var o = JSON.parse(raw); if (o && o.name && o.studentId) return o; return null; } catch (e) { return null; } }
+function saveActiveUser(u) { try { if (u) localStorage.setItem(STORAGE_ACTIVE, JSON.stringify(u)); else localStorage.removeItem(STORAGE_ACTIVE); } catch (e) {} }
+function loadDB() { try { var raw = localStorage.getItem(STORAGE_DB); if (!raw) return {}; var o = JSON.parse(raw); return (o && typeof o === 'object') ? o : {}; } catch (e) { return {}; } }
+function saveDB(db) { try { localStorage.setItem(STORAGE_DB, JSON.stringify(db)); } catch (e) {} }
+function getUserRecords(id) { if (!id) return []; var db = loadDB(); var e = db[id]; if (!e || !Array.isArray(e.records)) return []; return e.records; }
+function addUserRecord(id, name, rec) { var db = loadDB(); if (!db[id]) db[id] = { name:name, records:[] }; db[id].name = name; if (!Array.isArray(db[id].records)) db[id].records = []; db[id].records.push(rec); if (db[id].records.length > MAX_RECORDS) db[id].records.splice(0, db[id].records.length - MAX_RECORDS); saveDB(db); }
+function clearUserRecords(id) { var db = loadDB(); if (db[id]) { db[id].records = []; saveDB(db); } }
+function ensureUserEntry(id, name) { var db = loadDB(); if (!db[id]) db[id] = { name:name, records:[] }; else db[id].name = name; saveDB(db); }
+
+/* ============================================================
+   4. DOM
+   ============================================================ */
+var $ = function (id) { return document.getElementById(id); };
+var elDprimeSlider = $('dprime-slider'), elDprimeBadge = $('dprime-badge');
+var elSceneName = $('scene-name'), elInstruction = $('instruction'), elProgress = $('progress-chip');
+var elOverlay = $('stage-overlay'), elOverlayText = $('overlay-text'), elFeedback = $('feedback-flash');
+var elBtnSignal = $('btn-signal'), elBtnNoise = $('btn-noise');
+var elLiveHit = $('live-hit'), elLiveFA = $('live-fa'), elLiveTrial = $('live-trial');
+var elStageWrap = $('stage-wrap'), elStageContent = $('stage-content'), elStageCanvas = $('stage-canvas');
+
+function updateUserChips() {
+  var text = state.user ? (state.user.name + ' (' + state.user.studentId + ')') : '未登录';
+  var chips = document.querySelectorAll('.user-chip-text');
+  for (var i = 0; i < chips.length; i++) chips[i].textContent = text;
+}
+function updateAdminUI() {
+  var dataBtn = $('btn-open-data');
+  if (dataBtn) dataBtn.style.display = state.isAdmin ? 'inline-block' : 'none';
+  var badges = document.querySelectorAll('.admin-badge');
+  for (var i = 0; i < badges.length; i++) {
+    badges[i].style.display = state.isAdmin ? 'inline-block' : 'none';
+  }
+}
+function checkIsAdmin(name, sid) {
+  var n = String(name || '').trim().toLowerCase();
+  var s = String(sid || '').trim();
+  return (n === 'manager' && s === '0812');
+}
+
+/* ============================================================
+   5. 屏幕切换
+   ============================================================ */
+function showScreen(name) {
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) screens[i].classList.remove('is-active');
+  var target = $('screen-' + name);
+  if (!target) return;
+  target.classList.add('is-active');
+  if (name === 'concept') {
+    setTimeout(function () { resizeConceptCanvases(); drawAllConceptCharts(); }, 80);
+  }
+  if (name === 'result') {
+    setTimeout(function () {
+      var recs = state.user ? getUserRecords(state.user.studentId) : [];
+      drawBarChart(recs); drawROC(recs);
+    }, 30);
+  }
+  if (name === 'data') {
+    renderDataPage();
+  }
+}
+
+/* ============================================================
+   6. 登录 / 退出
+   ============================================================ */
+function showLoginError(msg) {
+  var el = $('login-error'); el.textContent = msg || '';
+  if (msg) { var c = $('login-card'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); }
+}
+function onLogin() {
+  var name = $('login-name').value.trim(), sid = $('login-id').value.trim();
+  if (!name) { showLoginError('请输入姓名'); return; }
+  if (name.length < 2) { showLoginError('姓名至少需要 2 个字符'); return; }
+  if (name.length > 20) { showLoginError('姓名过长，请检查输入'); return; }
+  if (!sid) { showLoginError('请输入学号'); return; }
+  if (!/^[A-Za-z0-9\-_]{3,30}$/.test(sid)) { showLoginError('学号格式：3–30 位字母、数字、连字符或下划线'); return; }
+  showLoginError('');
+
+  state.isAdmin = checkIsAdmin(name, sid);
+  console.log('[SDT-LAB] 登录请求:', { name: name, sid: sid, 小写姓名: name.toLowerCase(), isAdmin: state.isAdmin });
+
+  state.user = { name: name, studentId: sid };
+  saveActiveUser(state.user);
+  ensureUserEntry(sid, name);
+  updateUserChips();
+  updateAdminUI();
+
+  showScreen('home');
+}
+function onLogout() {
+  if (!confirm('确认退出登录吗？（本机实验数据会保留）')) return;
+  runId++; stopBgLoop();
+  state.phase = 'idle'; state.trial = null; state.user = null;
+  state.isAdmin = false;
+  saveActiveUser(null);
+  updateUserChips();
+  updateAdminUI();
+  showScreen('login');
+}
+$('login-name').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('login-id').focus(); } });
+$('login-id').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); onLogin(); } });
+$('btn-login').addEventListener('click', onLogin);
+$('btn-exit').addEventListener('click', onLogout);
+
+/* ============================================================
+   7. 背景粒子
+   ============================================================ */
+var bgCw = 0, bgCh = 0, bgRafId = null, bgLastTime = 0, bgParticles = [], bgRgb = '46,230,196';
+function resizeBgCanvas() { var rect = elStageCanvas.getBoundingClientRect(); var dpr = window.devicePixelRatio || 1; bgCw = rect.width; bgCh = rect.height; if (bgCw <= 0 || bgCh <= 0) return; elStageCanvas.width = Math.round(bgCw * dpr); elStageCanvas.height = Math.round(bgCh * dpr); elStageCanvas.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0); }
+function initBgParticles() { bgParticles = []; for (var i = 0; i < 36; i++) bgParticles.push({ x: Math.random()*bgCw, y: Math.random()*bgCh, vx: (Math.random()-0.5)*0.28, vy: (Math.random()-0.5)*0.28, r: Math.random()*2.2+0.5, phase: Math.random()*Math.PI*2 }); }
+function bgLoop(t) {
+  if (!bgLastTime) bgLastTime = t; bgLastTime = t;
+  var g = elStageCanvas.getContext('2d'); g.clearRect(0, 0, bgCw, bgCh);
+  var now = performance.now() / 1000;
+  for (var i = 0; i < bgParticles.length; i++) {
+    var p = bgParticles[i]; p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = bgCw; if (p.x > bgCw) p.x = 0;
+    if (p.y < 0) p.y = bgCh; if (p.y > bgCh) p.y = 0;
+    var alpha = 0.08 + 0.16 * (0.5 + 0.5 * Math.sin(now + p.phase));
+    g.fillStyle = 'rgba(' + bgRgb + ',' + alpha.toFixed(3) + ')';
+    g.beginPath(); g.arc(p.x, p.y, p.r, 0, Math.PI*2); g.fill();
+  }
+  bgRafId = requestAnimationFrame(bgLoop);
+}
+function startBgLoop() { if (bgRafId) return; resizeBgCanvas(); initBgParticles(); bgLastTime = 0; bgRafId = requestAnimationFrame(bgLoop); }
+function stopBgLoop() { if (bgRafId) { cancelAnimationFrame(bgRafId); bgRafId = null; } }
+window.addEventListener('resize', function () {
+  if ($('screen-exp').classList.contains('is-active')) { resizeBgCanvas(); initBgParticles(); }
+  if ($('screen-result').classList.contains('is-active')) { var recs = state.user ? getUserRecords(state.user.studentId) : []; drawBarChart(recs); drawROC(recs); }
+  if ($('screen-concept').classList.contains('is-active')) { resizeConceptCanvases(); drawAllConceptCharts(); }
+  if ($('screen-data').classList.contains('is-active') && state.isAdmin) {
+    var db = loadDB();
+    var uids = Object.keys(db);
+    var allRecords = [];
+    for (var i = 0; i < uids.length; i++) {
+      var entry = db[uids[i]];
+      if (!entry || !Array.isArray(entry.records)) continue;
+      for (var j = 0; j < entry.records.length; j++) {
+        allRecords.push({ rec: entry.records[j], name: entry.name, uid: uids[i] });
+      }
+    }
+    drawAllRecordsROC(allRecords);
+  }
+});
+
+/* ============================================================
+   8. 场景渲染
+   ============================================================ */
+function renderScene(trial) {
+  if (!trial) { elStageContent.innerHTML = ''; return; }
+  var html = '';
+  if (state.role === 'scam') {
+    html = '<div class="phone-frame"><div class="phone-status"><span>14:32</span><span>●●●●</span></div><div class="phone-header"><span class="phone-back">‹</span><span class="phone-title">短信</span></div><div class="phone-sender">' + escapeHtml(trial.sender||'') + '</div><div class="message-bubble"><p>' + escapeHtml(trial.text) + '</p></div><div class="phone-input">输入短信…</div></div>';
+  } else if (state.role === 'spam') {
+    var fl = (trial.from || 'A').charAt(0).toUpperCase();
+    html = '<div class="mail-frame"><div class="mail-header"><span class="mail-title">收件箱</span><span class="mail-badge">1 封未读</span></div><div class="mail-top"><div class="mail-avatar">' + escapeHtml(fl) + '</div><div class="mail-meta"><div class="mail-from">' + escapeHtml(trial.from||'') + '</div><div class="mail-subject">' + escapeHtml(trial.subject||'') + '</div></div></div><div class="mail-body">' + escapeHtml(trial.text) + '</div></div>';
+  } else {
+    var un = trial.user || 'Anonymous';
+    html = '<div class="post-frame"><div class="post-header"><div class="post-avatar">' + escapeHtml(un.charAt(0)) + '</div><div class="post-user"><div class="post-name">' + escapeHtml(un) + '</div><div class="post-time">2 分钟前 · 来自 iPhone</div></div></div><div class="post-content">' + escapeHtml(trial.text) + '</div><div class="post-actions"><span>❤️ 1.2k</span><span>💬 328</span><span>↗ 分享</span></div></div>';
+  }
+  elStageContent.innerHTML = html;
+}
+function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+/* ============================================================
+   9. 试次生成 —— 平衡 + 限制连续
+   ============================================================ */
+function longestRun(arr) {
+  if (!arr || arr.length === 0) return 0;
+  var max = 1, cur = 1;
+  for (var i = 1; i < arr.length; i++) {
+    if (arr[i] === arr[i - 1]) cur++;
+    else cur = 1;
+    if (cur > max) max = cur;
+  }
+  return max;
+}
+
+function generateBalancedSequence(total) {
+  var base = Math.round(total / 2);
+  var jitter;
+  if (total <= 12) jitter = Math.floor(Math.random() * 3) - 1;
+  else if (total <= 40) jitter = Math.floor(Math.random() * 3) - 1;
+  else jitter = Math.floor(Math.random() * 5) - 2;
+
+  var nSignal = base + jitter;
+  var minS = Math.floor(total * 0.4);
+  var maxS = Math.ceil(total * 0.6);
+  if (nSignal < minS) nSignal = minS;
+  if (nSignal > maxS) nSignal = maxS;
+  var nNoise = total - nSignal;
+
+  var maxRun = 2;
+  var arr = null;
+  var attempts = 0;
+
+  while (attempts < 300) {
+    arr = [];
+    for (var i = 0; i < nSignal; i++) arr.push(1);
+    for (var j = 0; j < nNoise; j++) arr.push(0);
+
+    for (var k = arr.length - 1; k > 0; k--) {
+      var r = Math.floor(Math.random() * (k + 1));
+      var tmp = arr[k]; arr[k] = arr[r]; arr[r] = tmp;
+    }
+
+    if (longestRun(arr) <= maxRun) break;
+    attempts++;
+    if (attempts === 100) maxRun = 3;
+    if (attempts === 200) maxRun = 4;
+  }
+
+  console.log(
+    '[SDT-LAB] 本局序列：信号 ' + nSignal + ' 次，噪声 ' + nNoise +
+    ' 次，最长连续 ' + longestRun(arr) + ' 个，尝试 ' + (attempts + 1) + ' 次',
+    arr
+  );
+  return arr;
+}
+
+function pickLevel(d) { var base = 1 + (d - 0.5) / 3 * 4; var j = (Math.random() - 0.5) * 1.4; return clamp(Math.round(base + j), 1, 5); }
+function pickText(pool, level, usedMap, poolKey) {
+  var exact = [];
+  for (var i = 0; i < pool.length; i++) if (pool[i].level === level) exact.push(i);
+  if (exact.length === 0) {
+    var bestLevel = pool[0].level, bestDist = Math.abs(bestLevel - level);
+    for (var j = 1; j < pool.length; j++) { var dd = Math.abs(pool[j].level - level); if (dd < bestDist) { bestDist = dd; bestLevel = pool[j].level; } }
+    exact = [];
+    for (var k = 0; k < pool.length; k++) if (pool[k].level === bestLevel) exact.push(k);
+  }
+  var fresh = exact.filter(function (idx) { return !usedMap[poolKey + ':' + idx]; });
+  var candidates = fresh.length > 0 ? fresh : exact;
+  if (fresh.length === 0) { for (var m = 0; m < exact.length; m++) delete usedMap[poolKey + ':' + exact[m]]; candidates = exact; }
+  var chosen = candidates[Math.floor(Math.random() * candidates.length)];
+  usedMap[poolKey + ':' + chosen] = true;
+  return pool[chosen];
+}
+function newTrial() {
+  var isSignal;
+  if (state.trialSequence && state.trialIndex < state.trialSequence.length) {
+    isSignal = state.trialSequence[state.trialIndex] === 1;
+    state.trialIndex++;
+  } else {
+    isSignal = Math.random() < 0.5;
+  }
+  var level = pickLevel(state.dprimeSetting);
+  var scene = CORPUS[state.role];
+  var poolKey = isSignal ? 'signal' : 'noise';
+  var item = pickText(scene[poolKey], level, state.usedIndices, poolKey);
+  state.trial = {
+    isSignal: isSignal, level: level, text: item.text,
+    sender: item.sender||'', from: item.from||'', subject: item.subject||'', user: item.user||''
+  };
+}
+
+/* ============================================================
+   10. 实验流程
+   ============================================================ */
+function setAnswerEnabled(on) { elBtnSignal.disabled = !on; elBtnNoise.disabled = !on; }
+function showOverlay(t) { elOverlayText.textContent = t; elOverlay.classList.add('show'); }
+function hideOverlay() { elOverlay.classList.remove('show'); }
+function showFeedback(ok, t) { elFeedback.textContent = t; elFeedback.className = 'feedback-flash show ' + (ok ? 'ok' : 'err'); }
+function hideFeedback() { elFeedback.className = 'feedback-flash'; }
+function updateHUD() {
+  var c = state.counts; var done = c.H + c.M + c.FA + c.CR;
+  elLiveHit.textContent = c.H; elLiveFA.textContent = c.FA;
+  elLiveTrial.textContent = done + ' / ' + state.totalTrials;
+  elProgress.textContent = '第 ' + Math.min(done + 1, state.totalTrials) + ' / ' + state.totalTrials + ' 次';
+}
+function startGame() {
+  if (!state.user) { showScreen('login'); return; }
+  var myRun = ++runId;
+  state.phase = 'idle'; state.counts = { H:0, M:0, FA:0, CR:0 }; state.trial = null;
+  state._trialForScore = null; state.results = null; state.locked = true;
+  state.usedIndices = { signal:{}, noise:{} };
+  state.trialSequence = generateBalancedSequence(state.totalTrials);
+  state.trialIndex = 0;
+
+  var role = ROLES[state.role];
+  elSceneName.textContent = role.scene; elInstruction.textContent = role.instruction;
+  elBtnSignal.textContent = role.yes; elBtnNoise.textContent = role.no;
+  document.body.className = document.body.className.replace(/role-\S+/g, '');
+  document.body.classList.add(role.bodyClass);
+  bgRgb = role.accentRgb;
+  elStageWrap.style.boxShadow = '0 0 70px rgba(' + role.accentRgb + ',0.12), 0 0 0 1px rgba(' + role.accentRgb + ',0.3)';
+  elOverlay.style.color = role.accent;
+  elStageContent.innerHTML = '';
+  showScreen('exp'); updateHUD(); startBgLoop();
+  setTimeout(function () { if (myRun !== runId) return; resizeBgCanvas(); initBgParticles(); nextTrial(myRun); }, 120);
+}
+async function nextTrial(myRun) {
+  if (myRun !== runId) return;
+  var c = state.counts, done = c.H + c.M + c.FA + c.CR;
+  if (done >= state.totalTrials) { finish(myRun); return; }
+  state.phase = 'ready'; state.locked = true;
+  hideFeedback(); setAnswerEnabled(false); showOverlay('准备…'); updateHUD();
+  newTrial(); state._trialForScore = state.trial;
+  elStageContent.innerHTML = '';
+  await sleep(READY_MS);
+  if (myRun !== runId) return;
+  state.phase = 'respond'; state.locked = false;
+  hideOverlay();
+  renderScene(state.trial);
+  setAnswerEnabled(true);
+}
+function onAnswer(saidYes) {
+  if (state.phase !== 'respond' || state.locked) return;
+  var trial = state._trialForScore; if (!trial) return;
+  state.locked = true; state.phase = 'feedback'; setAnswerEnabled(false); hideOverlay();
+  var isSignal = trial.isSignal, key, correct;
+  if (isSignal && saidYes) { key = 'H'; correct = true; }
+  else if (isSignal && !saidYes) { key = 'M'; correct = false; }
+  else if (!isSignal && saidYes) { key = 'FA'; correct = false; }
+  else { key = 'CR'; correct = true; }
+  state.counts[key]++; updateHUD();
+  var role = ROLES[state.role], label;
+  if (key === 'H') label = role.hitText + ' ✓';
+  else if (key === 'CR') label = '正确拒绝 ✓';
+  else if (key === 'FA') label = '误报 ✗';
+  else label = role.missText + ' ✗';
+  showFeedback(correct, label);
+  var myRun = runId;
+  setTimeout(function () { if (myRun !== runId) return; hideFeedback(); nextTrial(myRun); }, FB_MS);
+}
+function computeResults() {
+  var H = state.counts.H, M = state.counts.M, FA = state.counts.FA, CR = state.counts.CR;
+  var nS = H + M, nN = FA + CR;
+  var pHit = (H + 0.5) / (nS + 1), pFA = (FA + 0.5) / (nN + 1);
+  var zH = zFromP(pHit), zF = zFromP(pFA);
+  var d = zH - zF, c = -0.5 * (zH + zF);
+  var total = H + M + FA + CR, acc = total > 0 ? (H + CR) / total : 0;
+  return { H:H, M:M, FA:FA, CR:CR, pHit:pHit, pFA:pFA, zHit:zH, zFA:zF, dprime:d, c:c, acc:acc };
+}
+function finish(myRun) {
+  if (myRun !== runId) return;
+  state.phase = 'done'; state.locked = true;
+  stopBgLoop(); hideOverlay(); elStageContent.innerHTML = '';
+  var res = computeResults(); state.results = res;
+  var record = { ts: Date.now(), role: state.role, roleName: ROLES[state.role].name, dprimeSetting: state.dprimeSetting, totalTrials: state.totalTrials, H:res.H, M:res.M, FA:res.FA, CR:res.CR, pHit:res.pHit, pFA:res.pFA, dprime:res.dprime, c:res.c, acc:res.acc };
+  if (state.user) addUserRecord(state.user.studentId, state.user.name, record);
+  fillResult(res, record); showScreen('result');
+}
+function fillResult(res, record) {
+  $('result-role').textContent = ROLES[state.role].name;
+  $('result-meta').textContent = (state.user ? state.user.name + ' · ' + state.user.studentId + ' · ' : '') + '共 ' + state.totalTrials + ' 试次 · 设定 d′ = ' + state.dprimeSetting.toFixed(2) + ' · ' + new Date(record.ts).toLocaleString('zh-CN');
+  $('cell-H').querySelector('b').textContent = res.H;
+  $('cell-M').querySelector('b').textContent = res.M;
+  $('cell-FA').querySelector('b').textContent = res.FA;
+  $('cell-CR').querySelector('b').textContent = res.CR;
+  $('m-ph').textContent = res.pHit.toFixed(3);
+  $('m-pfa').textContent = res.pFA.toFixed(3);
+  $('m-dprime').textContent = res.dprime.toFixed(2);
+  $('m-c').textContent = res.c.toFixed(2);
+  $('m-acc').textContent = (res.acc * 100).toFixed(1) + '%';
+}
+
+/* ============================================================
+   11. 结果页历史图表
+   ============================================================ */
+function prepCanvas(el) {
+  var rect = el.getBoundingClientRect();
+  var dpr = window.devicePixelRatio || 1;
+  var W = rect.width || 600, H = rect.height || 200;
+  el.width = Math.round(W * dpr); el.height = Math.round(H * dpr);
+  var g = el.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  return { g:g, W:W, H:H };
+}
+function roundRectPath(g, x, y, w, h, r) {
+  if (h <= 0) h = 0.01;
+  r = Math.min(r, w/2, h/2);
+  g.beginPath();
+  g.moveTo(x+r, y); g.lineTo(x+w-r, y); g.quadraticCurveTo(x+w, y, x+w, y+r);
+  g.lineTo(x+w, y+h); g.lineTo(x, y+h); g.lineTo(x, y+r);
+  g.quadraticCurveTo(x, y, x+r, y); g.closePath();
+}
+function drawBarChart(hist) {
+  var cvs = $('chart-history'); if (!cvs) return;
+  var o = prepCanvas(cvs); var g = o.g, W = o.W, H = o.H;
+  var padL = 44, padR = 46, padT = 16, padB = 34;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+  g.strokeStyle = 'rgba(125,145,155,0.16)'; g.lineWidth = 1;
+  for (var i = 0; i <= 4; i++) { var yy = padT + plotH * i / 4; g.beginPath(); g.moveTo(padL, yy); g.lineTo(padL + plotW, yy); g.stroke(); }
+  if (!hist || hist.length === 0) { g.fillStyle = '#7d919b'; g.font = '13px system-ui'; g.textAlign = 'center'; g.fillText('暂无历史数据', W/2, H/2); return; }
+  var maxD = 2;
+  for (var k = 0; k < hist.length; k++) { var dv = Math.abs(hist[k].dprime || 0); if (dv > maxD) maxD = dv; }
+  maxD = Math.ceil(maxD * 1.15 * 2) / 2;
+  var cRange = 1.2;
+  for (var k2 = 0; k2 < hist.length; k2++) { var cv = Math.abs(hist[k2].c || 0); if (cv > cRange) cRange = cv; }
+  cRange = Math.ceil(cRange * 1.15 * 10) / 10;
+  var n = hist.length, slot = plotW / n, barW = Math.min(38, slot * 0.55);
+  for (var i2 = 0; i2 < n; i2++) {
+    var dpr = hist[i2].dprime || 0;
+    var x = padL + slot * i2 + slot / 2;
+    var hgt = clamp(dpr / maxD, 0, 1) * plotH;
+    var y = padT + plotH - hgt;
+    var grad = g.createLinearGradient(0, y, 0, padT + plotH);
+    grad.addColorStop(0, '#2ee6c4'); grad.addColorStop(1, 'rgba(46,230,196,0.22)');
+    g.fillStyle = grad;
+    roundRectPath(g, x - barW/2, y, barW, hgt, Math.min(6, barW/2));
+    g.fill();
+    g.fillStyle = '#e6f1f3'; g.font = '11px ui-monospace, monospace'; g.textAlign = 'center';
+    if (n <= 12) g.fillText(dpr.toFixed(2), x, y - 5);
+    g.fillStyle = '#7d919b'; g.font = '10.5px ui-monospace, monospace';
+    g.fillText('#' + (i2+1), x, H - padB + 16);
+  }
+  g.strokeStyle = '#ff4d9d'; g.lineWidth = 2; g.beginPath();
+  for (var i3 = 0; i3 < n; i3++) {
+    var cc = hist[i3].c || 0;
+    var x2 = padL + slot * i3 + slot / 2;
+    var y2 = padT + plotH * (1 - (clamp(cc, -cRange, cRange) + cRange) / (2 * cRange));
+    if (i3 === 0) g.moveTo(x2, y2); else g.lineTo(x2, y2);
+  }
+  g.stroke();
+  for (var i4 = 0; i4 < n; i4++) {
+    var cc2 = hist[i4].c || 0;
+    var x3 = padL + slot * i4 + slot / 2;
+    var y3 = padT + plotH * (1 - (clamp(cc2, -cRange, cRange) + cRange) / (2 * cRange));
+    g.fillStyle = '#ff4d9d'; g.beginPath(); g.arc(x3, y3, 3.4, 0, Math.PI*2); g.fill();
+    g.fillStyle = '#10161b'; g.beginPath(); g.arc(x3, y3, 1.4, 0, Math.PI*2); g.fill();
+  }
+  g.fillStyle = '#7d919b'; g.font = '10.5px ui-monospace, monospace'; g.textAlign = 'right';
+  for (var i5 = 0; i5 <= 4; i5++) { var val = maxD * (4 - i5) / 4; g.fillText(val.toFixed(1), padL - 7, padT + plotH * i5 / 4 + 3.5); }
+  g.textAlign = 'left'; g.fillStyle = '#ff4d9d';
+  for (var i6 = 0; i6 <= 2; i6++) { var cval = cRange * (1 - i6); g.fillText(cval.toFixed(1), padL + plotW + 7, padT + plotH * i6 / 2 + 3.5); }
+  g.textAlign = 'left'; g.font = '11px system-ui';
+  g.fillStyle = '#2ee6c4'; g.fillRect(padL, 4, 10, 8);
+  g.fillStyle = '#7d919b'; g.fillText('d′', padL + 14, 12);
+  g.fillStyle = '#ff4d9d'; g.fillRect(padL + 44, 4, 10, 8);
+  g.fillStyle = '#7d919b'; g.fillText('c', padL + 58, 12);
+}
+function drawROC(hist) {
+  var cvs = $('chart-roc'); if (!cvs) return;
+  var o = prepCanvas(cvs); var g = o.g, W = o.W, H = o.H;
+  var padL = 46, padR = 20, padT = 16, padB = 34;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+  g.strokeStyle = 'rgba(125,145,155,0.35)'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(padL, padT); g.lineTo(padL, padT + plotH); g.lineTo(padL + plotW, padT + plotH); g.stroke();
+  g.strokeStyle = 'rgba(125,145,155,0.13)';
+  for (var i = 1; i <= 4; i++) { var gx = padL + plotW * i / 4, gy = padT + plotH * i / 4; g.beginPath(); g.moveTo(gx, padT); g.lineTo(gx, padT + plotH); g.stroke(); g.beginPath(); g.moveTo(padL, gy); g.lineTo(padL + plotW, gy); g.stroke(); }
+  g.strokeStyle = 'rgba(255,77,157,0.45)'; g.setLineDash([5, 5]);
+  g.beginPath(); g.moveTo(padL, padT + plotH); g.lineTo(padL + plotW, padT); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#7d919b'; g.font = '10.5px ui-monospace, monospace'; g.textAlign = 'center';
+  for (var j = 0; j <= 4; j++) g.fillText((j/4).toFixed(2), padL + plotW * j / 4, H - padB + 16);
+  g.textAlign = 'right';
+  for (var j2 = 0; j2 <= 4; j2++) g.fillText((1 - j2/4).toFixed(2), padL - 7, padT + plotH * j2 / 4 + 3.5);
+  g.textAlign = 'center'; g.font = '11px system-ui'; g.fillStyle = '#7d919b';
+  g.fillText('P(FA)', padL + plotW / 2, H - 6);
+  g.save(); g.translate(13, padT + plotH / 2); g.rotate(-Math.PI/2); g.fillText('P(H)', 0, 0); g.restore();
+  if (!hist || hist.length === 0) { g.fillStyle = '#7d919b'; g.font = '13px system-ui'; g.textAlign = 'center'; g.fillText('暂无历史数据', W/2, H/2); return; }
+  var roleColors = { scam: '#2ee6c4', spam: '#ff4d9d', social: '#ffc857' };
+  for (var k = 0; k < hist.length; k++) {
+    var pfa = clamp(hist[k].pFA || 0, 0, 1), ph = clamp(hist[k].pHit || 0, 0, 1);
+    var x = padL + plotW * pfa, y = padT + plotH * (1 - ph);
+    var isLatest = (k === hist.length - 1);
+    var col = roleColors[hist[k].role] || '#2ee6c4';
+    g.globalAlpha = isLatest ? 1 : 0.45;
+    g.fillStyle = col; g.beginPath(); g.arc(x, y, isLatest ? 6 : 4.2, 0, Math.PI*2); g.fill();
+    if (isLatest) { g.strokeStyle = '#e6f1f3'; g.lineWidth = 1.6; g.beginPath(); g.arc(x, y, 9, 0, Math.PI*2); g.stroke(); }
+    g.globalAlpha = 1;
+  }
+}
+
+/* ============================================================
+   12. 概念实验室
+   ============================================================ */
+var conceptCanvases = {};
+
+function resizeConceptCanvases() {
+  ['canvas-dist','canvas-roc','canvas-payoff','canvas-vig'].forEach(function (id) {
+    var cvs = $(id); if (!cvs) return;
+    var w = cvs.clientWidth, h = cvs.clientHeight;
+    if (w <= 0 || h <= 0) return;
+    var dpr = window.devicePixelRatio || 1;
+    cvs.width = Math.round(w * dpr);
+    cvs.height = Math.round(h * dpr);
+    var g = cvs.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    conceptCanvases[id] = { g: g, W: w, H: h };
+  });
+}
+
+function drawAllConceptCharts() {
+  drawDistribution();
+  drawConceptROC();
+  drawPayoffChart();
+  drawML();
+  drawVigilance(conceptState.vigilance.data);
+}
+
+function drawDistribution() {
+  var c = conceptCanvases['canvas-dist']; if (!c) return;
+  var g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  var padL = 50, padR = 20, padT = 40, padB = 40;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+  var d = conceptState.dprime, cVal = conceptState.c;
+
+  g.strokeStyle = 'rgba(125,145,155,0.13)';
+  for (var i = 1; i <= 4; i++) { var gy = padT + plotH * i / 5; g.beginPath(); g.moveTo(padL, gy); g.lineTo(padL + plotW, gy); g.stroke(); }
+  g.strokeStyle = 'rgba(125,145,155,0.5)'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(padL, padT + plotH); g.lineTo(padL + plotW, padT + plotH); g.stroke();
+
+  g.fillStyle = '#7d919b'; g.font = '10px ui-monospace, monospace'; g.textAlign = 'center';
+  for (var x = -4; x <= 4; x += 2) {
+    var px = padL + plotW * (x + 4) / 8;
+    g.beginPath(); g.moveTo(px, padT + plotH); g.lineTo(px, padT + plotH + 4); g.stroke();
+    g.fillText(x, px, H - padB + 16);
+  }
+  g.textAlign = 'right';
+  var maxY = 0.45;
+  for (var yv = 0; yv <= maxY; yv += 0.1) {
+    var py = padT + plotH * (1 - yv / maxY);
+    g.beginPath(); g.moveTo(padL - 4, py); g.lineTo(padL, py); g.stroke();
+    g.fillText(yv.toFixed(1), padL - 7, py + 3.5);
+  }
+
+  function drawCurve(mu, stroke, fill) {
+    g.beginPath();
+    for (var i = 0; i <= 200; i++) {
+      var xv = -4 + 8 * i / 200;
+      var yv = normalPDF(xv, mu, 1);
+      var px = padL + plotW * (xv + 4) / 8;
+      var py = padT + plotH * (1 - yv / maxY);
+      if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
+    }
+    g.strokeStyle = stroke; g.lineWidth = 2.5; g.stroke();
+    g.lineTo(padL + plotW, padT + plotH);
+    g.lineTo(padL, padT + plotH);
+    g.closePath();
+    g.fillStyle = fill; g.fill();
+  }
+  drawCurve(-d/2, '#5aa9ff', 'rgba(90,169,255,0.12)');
+  drawCurve(d/2, '#2ee6c4', 'rgba(46,230,196,0.12)');
+
+  var cx = padL + plotW * (cVal + 4) / 8;
+  g.strokeStyle = '#ff4d9d'; g.lineWidth = 2; g.setLineDash([5, 4]);
+  g.beginPath(); g.moveTo(cx, padT); g.lineTo(cx, padT + plotH); g.stroke();
+  g.setLineDash([]);
+
+  g.fillStyle = '#5aa9ff'; g.font = 'bold 12px system-ui'; g.textAlign = 'center';
+  g.fillText('噪声 N', padL + plotW * (-d/2 + 4) / 8, padT + 18);
+  g.fillStyle = '#2ee6c4';
+  g.fillText('信号 SN', padL + plotW * (d/2 + 4) / 8, padT + 18);
+  g.fillStyle = '#ff4d9d'; g.font = 'bold 12px ui-monospace, monospace';
+  g.fillText('c = ' + cVal.toFixed(2), cx, padT - 6);
+}
+
+function drawConceptROC() {
+  var c = conceptCanvases['canvas-roc']; if (!c) return;
+  var g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  var padL = 55, padR = 30, padT = 50, padB = 50;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+  var d = conceptState.dprime, cVal = conceptState.c;
+
+  g.strokeStyle = 'rgba(125,145,155,0.13)'; g.lineWidth = 1;
+  for (var i = 1; i <= 4; i++) {
+    var gx = padL + plotW * i / 5;
+    var gy = padT + plotH * i / 5;
+    g.beginPath(); g.moveTo(gx, padT); g.lineTo(gx, padT + plotH); g.stroke();
+    g.beginPath(); g.moveTo(padL, gy); g.lineTo(padL + plotW, gy); g.stroke();
+  }
+  g.strokeStyle = 'rgba(125,145,155,0.5)'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(padL, padT); g.lineTo(padL, padT + plotH); g.lineTo(padL + plotW, padT + plotH); g.stroke();
+
+  g.strokeStyle = 'rgba(125,145,155,0.4)'; g.setLineDash([5, 5]);
+  g.beginPath(); g.moveTo(padL, padT + plotH); g.lineTo(padL + plotW, padT); g.stroke();
+  g.setLineDash([]);
+
+  g.strokeStyle = '#2ee6c4'; g.lineWidth = 2.5;
+  g.beginPath();
+  var first = true;
+  for (var ct = 5; ct >= -5; ct -= 0.05) {
+    var pfa = pFromZ(-d/2 - ct);
+    var ph = pFromZ(d/2 - ct);
+    var x = padL + plotW * pfa;
+    var y = padT + plotH * (1 - ph);
+    if (first) { g.moveTo(x, y); first = false; } else g.lineTo(x, y);
+  }
+  g.stroke();
+  g.lineTo(padL + plotW, padT + plotH);
+  g.lineTo(padL, padT + plotH);
+  g.closePath();
+  g.fillStyle = 'rgba(46,230,196,0.08)';
+  g.fill();
+
+  var curPFA = pFromZ(-d/2 - cVal);
+  var curPH = pFromZ(d/2 - cVal);
+  var curX = padL + plotW * curPFA;
+  var curY = padT + plotH * (1 - curPH);
+
+  g.strokeStyle = 'rgba(255,77,157,0.5)'; g.lineWidth = 1; g.setLineDash([4, 4]);
+  g.beginPath();
+  g.moveTo(curX, curY); g.lineTo(curX, padT + plotH);
+  g.moveTo(curX, curY); g.lineTo(padL, curY);
+  g.stroke();
+  g.setLineDash([]);
+
+  g.fillStyle = '#ff4d9d';
+  g.beginPath(); g.arc(curX, curY, 7, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = '#fff'; g.lineWidth = 2;
+  g.beginPath(); g.arc(curX, curY, 10, 0, Math.PI * 2); g.stroke();
+
+  g.fillStyle = '#7d919b'; g.font = '10.5px ui-monospace, monospace'; g.textAlign = 'center';
+  for (var j = 0; j <= 5; j++) g.fillText((j/5).toFixed(1), padL + plotW * j / 5, padT + plotH + 16);
+  g.textAlign = 'right';
+  for (var j2 = 0; j2 <= 5; j2++) g.fillText((1 - j2/5).toFixed(1), padL - 7, padT + plotH * j2 / 5 + 3.5);
+  g.textAlign = 'center'; g.font = '12px system-ui'; g.fillStyle = '#7d919b';
+  g.fillText('P(FA) →', padL + plotW / 2, H - 10);
+  g.save(); g.translate(15, padT + plotH / 2); g.rotate(-Math.PI / 2); g.fillText('P(H) →', 0, 0); g.restore();
+
+  var auc = pFromZ(d / Math.SQRT2);
+  g.textAlign = 'left';
+  g.fillStyle = '#2ee6c4'; g.font = 'bold 13px ui-monospace, monospace';
+  g.fillText('d′ = ' + d.toFixed(2) + '   AUC = ' + auc.toFixed(3), padL, 24);
+  g.fillStyle = '#ff4d9d'; g.font = 'bold 12px ui-monospace, monospace';
+  g.fillText('● 当前 (P(FA) = ' + curPFA.toFixed(2) + ', P(H) = ' + curPH.toFixed(2) + ')', padL, 42);
+}
+
+function drawPayoff() {
+  var ps = conceptState.ps;
+  var VH = conceptState.payoffs.VH, VM = conceptState.payoffs.VM;
+  var VFA = conceptState.payoffs.VFA, VCR = conceptState.payoffs.VCR;
+  var pn = 1 - ps;
+  $('val-ps').textContent = ps.toFixed(2);
+  $('val-pn').textContent = pn.toFixed(2);
+  var num = pn * (VCR - VFA);
+  var den = ps * (VH - VM);
+  var betaOpt = den !== 0 ? num / den : 1;
+  if (!isFinite(betaOpt) || betaOpt <= 0) betaOpt = 0.01;
+  $('val-beta-opt').textContent = betaOpt.toFixed(2);
+  var d = conceptState.dprime, cVal = conceptState.c;
+  var betaCur = Math.exp(d * cVal);
+  $('val-beta-cur').textContent = betaCur.toFixed(2);
+  drawPayoffChart();
+}
+
+function drawPayoffChart() {
+  var c = conceptCanvases['canvas-payoff']; if (!c) return;
+  var g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  var padL = 60, padR = 40, padT = 45, padB = 40;
+  var plotW = W - padL - padR;
+  var trackY = padT + (H - padT - padB) / 2;
+
+  g.strokeStyle = 'rgba(125,145,155,0.35)'; g.lineWidth = 3;
+  g.beginPath(); g.moveTo(padL, trackY); g.lineTo(padL + plotW, trackY); g.stroke();
+
+  var cMin = -3, cMax = 3;
+  function cToX(cv) { return padL + plotW * (cv - cMin) / (cMax - cMin); }
+
+  g.fillStyle = '#7d919b'; g.font = '10px ui-monospace, monospace'; g.textAlign = 'center';
+  for (var cv = -3; cv <= 3; cv += 1) {
+    var px = cToX(cv);
+    g.strokeStyle = 'rgba(125,145,155,0.3)'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(px, trackY - 6); g.lineTo(px, trackY + 6); g.stroke();
+    g.fillText(cv, px, trackY + 22);
+  }
+
+  var ps = conceptState.ps;
+  var VH = conceptState.payoffs.VH, VM = conceptState.payoffs.VM;
+  var VFA = conceptState.payoffs.VFA, VCR = conceptState.payoffs.VCR;
+  var pn = 1 - ps;
+  var num = pn * (VCR - VFA);
+  var den = ps * (VH - VM);
+  var betaOpt = den !== 0 ? num / den : 1;
+  if (!isFinite(betaOpt) || betaOpt <= 0) betaOpt = 0.01;
+  var d = conceptState.dprime;
+  var cOpt = d > 0 ? Math.log(betaOpt) / d : 0;
+  cOpt = clamp(cOpt, cMin, cMax);
+
+  var cCur = clamp(conceptState.c, cMin, cMax);
+  var xCur = cToX(cCur);
+  var xOpt = cToX(cOpt);
+
+  g.fillStyle = '#ffc857';
+  g.beginPath();
+  g.moveTo(xOpt, trackY - 16);
+  g.lineTo(xOpt - 8, trackY - 26);
+  g.lineTo(xOpt + 8, trackY - 26);
+  g.closePath();
+  g.fill();
+  g.font = 'bold 11px ui-monospace, monospace'; g.textAlign = 'center';
+  g.fillText('c_opt = ' + cOpt.toFixed(2), xOpt, trackY - 32);
+
+  g.fillStyle = '#ff4d9d';
+  g.beginPath(); g.arc(xCur, trackY, 8, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = '#fff'; g.lineWidth = 2;
+  g.beginPath(); g.arc(xCur, trackY, 11, 0, Math.PI * 2); g.stroke();
+  g.fillStyle = '#ff4d9d'; g.font = 'bold 11px ui-monospace, monospace';
+  g.fillText('c = ' + cCur.toFixed(2), xCur, trackY + 40);
+
+  g.textAlign = 'left'; g.font = '11px system-ui';
+  g.fillStyle = '#ffc857'; g.fillText('▲ 最优 c（收益最大化）', padL, 18);
+  g.fillStyle = '#ff4d9d'; g.fillText('● 当前 c', padL + 200, 18);
+}
+
+function drawML() {
+  var d = conceptState.dprime, cVal = conceptState.c;
+  var pfa = pFromZ(-d/2 - cVal);
+  var ph = pFromZ(d/2 - cVal);
+  var N = 1000, halfN = N / 2;
+  var TP = Math.round(ph * halfN);
+  var FN = halfN - TP;
+  var FP = Math.round(pfa * halfN);
+  var TN = halfN - FP;
+  $('ml-tp').textContent = TP; $('ml-fp').textContent = FP;
+  $('ml-fn').textContent = FN; $('ml-tn').textContent = TN;
+  var precision = (TP + FP) > 0 ? TP / (TP + FP) : 0;
+  var recall = (TP + FN) > 0 ? TP / (TP + FN) : 0;
+  var f1 = (precision + recall) > 0 ? 2 * precision * recall / (precision + recall) : 0;
+  var specificity = (TN + FP) > 0 ? TN / (TN + FP) : 0;
+  var accuracy = (TP + TN) / N;
+  var auc = pFromZ(d / Math.SQRT2);
+  $('ml-precision').textContent = precision.toFixed(3);
+  $('ml-recall').textContent = recall.toFixed(3);
+  $('ml-f1').textContent = f1.toFixed(3);
+  $('ml-specificity').textContent = specificity.toFixed(3);
+  $('ml-accuracy').textContent = accuracy.toFixed(3);
+  $('ml-auc').textContent = auc.toFixed(3);
+}
+
+function runVigilance() {
+  var dropD = $('vig-dprime').checked;
+  var riseC = $('vig-c').checked;
+  var data = [];
+  var baseD = conceptState.dprime;
+  var baseC = conceptState.c;
+  var nSignal = 30;
+  var nNoise = 270;
+
+  for (var t = 0; t < 8; t++) {
+    var fraction = t / 7;
+    var dTrue = dropD ? baseD * (1 - 0.55 * fraction) : baseD;
+    var cTrue = riseC ? baseC + 1.2 * fraction : baseC;
+    var pHitTrue = pFromZ(dTrue / 2 - cTrue);
+    var pFATrue = pFromZ(-dTrue / 2 - cTrue);
+    var hits = 0;
+    for (var i = 0; i < nSignal; i++) if (Math.random() < pHitTrue) hits++;
+    var fas = 0;
+    for (var j = 0; j < nNoise; j++) if (Math.random() < pFATrue) fas++;
+    var pHitObs = (hits + 0.5) / (nSignal + 1);
+    var pFAObs = (fas + 0.5) / (nNoise + 1);
+    var zH = zFromP(pHitObs);
+    var zF = zFromP(pFAObs);
+    var dObs = zH - zF;
+    var cObs = -0.5 * (zH + zF);
+    data.push({
+      dprime: dObs, c: cObs, pHit: pHitObs, pFA: pFAObs,
+      hits: hits, fas: fas, dTrue: dTrue, cTrue: cTrue,
+      label: ((t + 1) * 15) + 'm'
+    });
+  }
+  conceptState.vigilance.data = data;
+  drawVigilance(data);
+}
+
+function drawVigilance(data) {
+  var c = conceptCanvases['canvas-vig']; if (!c) return;
+  var g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+
+  var padL = 60, padR = 60, padT = 50, padB = 50;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+
+  g.strokeStyle = 'rgba(125,145,155,0.13)'; g.lineWidth = 1;
+  for (var i = 1; i <= 4; i++) {
+    var gy = padT + plotH * i / 4;
+    g.beginPath(); g.moveTo(padL, gy); g.lineTo(padL + plotW, gy); g.stroke();
+  }
+  for (var i2 = 1; i2 < 8; i2++) {
+    var gx = padL + plotW * i2 / 8;
+    g.beginPath(); g.moveTo(gx, padT); g.lineTo(gx, padT + plotH); g.stroke();
+  }
+
+  g.strokeStyle = 'rgba(125,145,155,0.5)'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(padL, padT); g.lineTo(padL, padT + plotH); g.lineTo(padL + plotW, padT + plotH); g.stroke();
+
+  if (!data || data.length === 0) {
+    g.fillStyle = '#7d919b'; g.font = '13px system-ui'; g.textAlign = 'center';
+    g.fillText('点击「开始模拟」生成 8 个时段的监控数据', W / 2, H / 2);
+    return;
+  }
+
+  var n = data.length;
+  var slot = plotW / (n - 1);
+  var dMax = 4;
+  var cMin = -1, cMax = 3;
+
+  g.fillStyle = '#2ee6c4'; g.font = '10.5px ui-monospace, monospace'; g.textAlign = 'right';
+  for (var yv = 0; yv <= dMax; yv += 1) {
+    var py = padT + plotH * (1 - yv / dMax);
+    g.fillText(yv.toFixed(0), padL - 8, py + 3.5);
+  }
+  g.fillStyle = '#ff4d9d'; g.textAlign = 'left';
+  for (var cvv = cMin; cvv <= cMax; cvv += 1) {
+    var py2 = padT + plotH * (1 - (cvv - cMin) / (cMax - cMin));
+    g.fillText(cvv.toFixed(0), padL + plotW + 8, py2 + 3.5);
+  }
+
+  g.fillStyle = '#7d919b'; g.textAlign = 'center';
+  for (var t = 0; t < n; t++) {
+    var xt = padL + slot * t;
+    g.fillText(data[t].label, xt, padT + plotH + 20);
+  }
+
+  g.strokeStyle = 'rgba(46,230,196,0.35)'; g.lineWidth = 1.5; g.setLineDash([3, 3]);
+  g.beginPath();
+  for (var kt = 0; kt < n; kt++) {
+    var xt2 = padL + slot * kt;
+    var yt = padT + plotH * (1 - clamp(data[kt].dTrue, 0, dMax) / dMax);
+    if (kt === 0) g.moveTo(xt2, yt); else g.lineTo(xt2, yt);
+  }
+  g.stroke();
+  g.setLineDash([]);
+
+  g.strokeStyle = '#2ee6c4'; g.lineWidth = 2.5;
+  g.beginPath();
+  for (var k = 0; k < n; k++) {
+    var x = padL + slot * k;
+    var y = padT + plotH * (1 - clamp(data[k].dprime, 0, dMax) / dMax);
+    if (k === 0) g.moveTo(x, y); else g.lineTo(x, y);
+  }
+  g.stroke();
+
+  for (var k2 = 0; k2 < n; k2++) {
+    var x2 = padL + slot * k2;
+    var y2 = padT + plotH * (1 - clamp(data[k2].dprime, 0, dMax) / dMax);
+    g.fillStyle = '#2ee6c4';
+    g.beginPath(); g.arc(x2, y2, 5, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#0a1115';
+    g.beginPath(); g.arc(x2, y2, 2.2, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#7dffe4'; g.font = '10px ui-monospace, monospace'; g.textAlign = 'center';
+    g.fillText(data[k2].dprime.toFixed(2), x2, y2 - 12);
+  }
+
+  g.strokeStyle = 'rgba(255,77,157,0.35)'; g.lineWidth = 1.5; g.setLineDash([3, 3]);
+  g.beginPath();
+  for (var kc = 0; kc < n; kc++) {
+    var xc = padL + slot * kc;
+    var yc = padT + plotH * (1 - (clamp(data[kc].cTrue, cMin, cMax) - cMin) / (cMax - cMin));
+    if (kc === 0) g.moveTo(xc, yc); else g.lineTo(xc, yc);
+  }
+  g.stroke();
+  g.setLineDash([]);
+
+  g.strokeStyle = '#ff4d9d'; g.lineWidth = 2.5; g.setLineDash([6, 4]);
+  g.beginPath();
+  for (var k3 = 0; k3 < n; k3++) {
+    var x3 = padL + slot * k3;
+    var y3 = padT + plotH * (1 - (clamp(data[k3].c, cMin, cMax) - cMin) / (cMax - cMin));
+    if (k3 === 0) g.moveTo(x3, y3); else g.lineTo(x3, y3);
+  }
+  g.stroke();
+  g.setLineDash([]);
+
+  for (var k4 = 0; k4 < n; k4++) {
+    var x4 = padL + slot * k4;
+    var y4 = padT + plotH * (1 - (clamp(data[k4].c, cMin, cMax) - cMin) / (cMax - cMin));
+    g.fillStyle = '#ff4d9d';
+    g.beginPath(); g.arc(x4, y4, 5, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#0a1115';
+    g.beginPath(); g.arc(x4, y4, 2.2, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#ffa8ce'; g.font = '10px ui-monospace, monospace'; g.textAlign = 'center';
+    g.fillText(data[k4].c.toFixed(2), x4, y4 + 18);
+  }
+
+  g.textAlign = 'left'; g.font = '11px system-ui';
+  g.fillStyle = '#2ee6c4'; g.fillRect(padL, 14, 14, 4);
+  g.fillStyle = '#7d919b'; g.fillText('d′ 观测值', padL + 20, 19);
+  g.fillStyle = '#ff4d9d'; g.fillRect(padL + 130, 14, 14, 4);
+  g.fillStyle = '#7d919b'; g.fillText('c 观测值', padL + 150, 19);
+  g.fillStyle = 'rgba(46,230,196,0.6)'; g.fillRect(padL + 250, 14, 14, 4);
+  g.fillStyle = '#7d919b'; g.fillText('理论趋势', padL + 270, 19);
+
+  g.fillStyle = '#7d919b'; g.font = '10.5px system-ui'; g.textAlign = 'center';
+  g.fillText('监控时长（每时段 30 信号 + 270 噪声，二项式采样）', padL + plotW / 2, H - 8);
+}
+
+/* ============================================================
+   13. 数据管理
+   ============================================================ */
+function formatTs(ts) {
+  try {
+    var d = new Date(ts);
+    var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+           ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  } catch (e) { return '—'; }
+}
+
+function renderDataPage() {
+  var db = loadDB();
+  var content = $('data-content');
+  var summary = $('data-summary');
+  var title = $('data-title');
+
+  var sortRow = $('data-sort-row');
+  var rocCard = document.querySelector('.data-roc-card');
+  if (state.isAdmin) {
+    if (sortRow) sortRow.style.display = 'flex';
+    if (rocCard) rocCard.style.display = 'block';
+    title.textContent = '所有被试记录';
+  } else {
+    if (sortRow) sortRow.style.display = 'none';
+    if (rocCard) rocCard.style.display = 'none';
+    title.textContent = '我的实验记录';
+  }
+
+  var uids = Object.keys(db);
+
+  if (!state.isAdmin) {
+    if (state.user && db[state.user.studentId]) {
+      var mine = {};
+      mine[state.user.studentId] = db[state.user.studentId];
+      db = mine;
+      uids = [state.user.studentId];
+    } else {
+      db = {};
+      uids = [];
+    }
+  }
+
+  if (uids.length === 0) {
+    summary.textContent = '暂无数据';
+    content.innerHTML = '<div class="data-empty">还没有任何实验记录</div>';
+    var cvsEmpty = $('canvas-data-roc');
+    if (cvsEmpty) { var g0 = cvsEmpty.getContext('2d'); g0.clearRect(0, 0, cvsEmpty.width, cvsEmpty.height); }
+    var legendEmpty = $('data-roc-legend');
+    if (legendEmpty) legendEmpty.innerHTML = '';
+    return;
+  }
+
+  var allRecords = [];
+  var totalRecords = 0;
+  for (var i = 0; i < uids.length; i++) {
+    var entry = db[uids[i]];
+    if (!entry || !Array.isArray(entry.records)) continue;
+    for (var j = 0; j < entry.records.length; j++) {
+      allRecords.push({ rec: entry.records[j], name: entry.name || '（未命名）', uid: uids[i] });
+      totalRecords++;
+    }
+  }
+
+  var sortMode = dataSortMode;
+  allRecords.sort(function (a, b) {
+    if (sortMode === 'time')        return (a.rec.ts || 0) - (b.rec.ts || 0);
+    if (sortMode === 'dprime-desc') return (b.rec.dprime || 0) - (a.rec.dprime || 0);
+    if (sortMode === 'dprime-asc')  return (a.rec.dprime || 0) - (b.rec.dprime || 0);
+    if (sortMode === 'c-desc')      return (b.rec.c || 0) - (a.rec.c || 0);
+    if (sortMode === 'c-asc')       return (a.rec.c || 0) - (b.rec.c || 0);
+    return 0;
+  });
+
+  summary.textContent = '共 ' + uids.length + ' 位被试，' + totalRecords + ' 条实验记录';
+
+  if (state.isAdmin) {
+    setTimeout(function () { drawAllRecordsROC(allRecords); }, 30);
+  }
+
+  var html = '';
+  html += '<div class="data-user-card">';
+  html += '<h3>记录列表<span class="data-uid">' + totalRecords + ' 条</span></h3>';
+  html += '<div class="data-user-summary">按当前排序规则显示</div>';
+
+  if (totalRecords === 0) {
+    html += '<div class="data-empty" style="padding:20px;">没有任何实验记录</div>';
+  } else {
+    html += '<div style="overflow-x:auto;"><table class="data-table">';
+    html += '<thead><tr>' +
+            '<th>#</th><th>姓名</th><th>学号</th><th>时间</th><th>场景</th><th>试次</th>' +
+            '<th>d′设定</th><th>H</th><th>M</th><th>FA</th><th>CR</th>' +
+            '<th>P(H)</th><th>P(FA)</th><th>d′</th><th>c</th><th>准确率</th>' +
+            '</tr></thead><tbody>';
+
+    for (var k = 0; k < allRecords.length; k++) {
+      var item = allRecords[k];
+      var r = item.rec;
+      html += '<tr>' +
+              '<td>' + (k + 1) + '</td>' +
+              '<td>' + escapeHtml(item.name) + '</td>' +
+              '<td>' + escapeHtml(item.uid) + '</td>' +
+              '<td>' + formatTs(r.ts) + '</td>' +
+              '<td>' + escapeHtml(r.roleName || r.role || '—') + '</td>' +
+              '<td>' + (r.totalTrials || '—') + '</td>' +
+              '<td>' + (typeof r.dprimeSetting === 'number' ? r.dprimeSetting.toFixed(1) : '—') + '</td>' +
+              '<td>' + (r.H != null ? r.H : '—') + '</td>' +
+              '<td>' + (r.M != null ? r.M : '—') + '</td>' +
+              '<td>' + (r.FA != null ? r.FA : '—') + '</td>' +
+              '<td>' + (r.CR != null ? r.CR : '—') + '</td>' +
+              '<td>' + (typeof r.pHit === 'number' ? r.pHit.toFixed(3) : '—') + '</td>' +
+              '<td>' + (typeof r.pFA === 'number' ? r.pFA.toFixed(3) : '—') + '</td>' +
+              '<td>' + (typeof r.dprime === 'number' ? r.dprime.toFixed(2) : '—') + '</td>' +
+              '<td>' + (typeof r.c === 'number' ? r.c.toFixed(2) : '—') + '</td>' +
+              '<td>' + (typeof r.acc === 'number' ? (r.acc * 100).toFixed(1) + '%' : '—') + '</td>' +
+              '</tr>';
+    }
+
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+
+  content.innerHTML = html;
+}
+
+function drawAllRecordsROC(allRecords) {
+  var cvs = $('canvas-data-roc');
+  if (!cvs) return;
+  var rect = cvs.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
+
+  var dpr = window.devicePixelRatio || 1;
+  cvs.width = Math.round(rect.width * dpr);
+  cvs.height = Math.round(rect.height * dpr);
+  var g = cvs.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  var W = rect.width, H = rect.height;
+  g.clearRect(0, 0, W, H);
+
+  var padL = 60, padR = 30, padT = 40, padB = 50;
+  var plotW = W - padL - padR;
+  var plotH = H - padT - padB;
+
+  g.strokeStyle = 'rgba(125,145,155,0.13)'; g.lineWidth = 1;
+  for (var i = 1; i <= 4; i++) {
+    var gx = padL + plotW * i / 5;
+    var gy = padT + plotH * i / 5;
+    g.beginPath(); g.moveTo(gx, padT); g.lineTo(gx, padT + plotH); g.stroke();
+    g.beginPath(); g.moveTo(padL, gy); g.lineTo(padL + plotW, gy); g.stroke();
+  }
+
+  g.strokeStyle = 'rgba(125,145,155,0.5)'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(padL, padT); g.lineTo(padL, padT + plotH); g.lineTo(padL + plotW, padT + plotH); g.stroke();
+
+  g.strokeStyle = 'rgba(255,77,157,0.4)'; g.setLineDash([6, 6]);
+  g.beginPath(); g.moveTo(padL, padT + plotH); g.lineTo(padL + plotW, padT); g.stroke();
+  g.setLineDash([]);
+
+  g.fillStyle = '#7d919b'; g.font = '11px ui-monospace, monospace'; g.textAlign = 'center';
+  for (var j = 0; j <= 5; j++) g.fillText((j / 5).toFixed(1), padL + plotW * j / 5, padT + plotH + 18);
+  g.textAlign = 'right';
+  for (var j2 = 0; j2 <= 5; j2++) g.fillText((1 - j2 / 5).toFixed(1), padL - 8, padT + plotH * j2 / 5 + 4);
+
+  g.textAlign = 'center'; g.font = '12px system-ui'; g.fillStyle = '#7d919b';
+  g.fillText('P(FA) →', padL + plotW / 2, H - 12);
+  g.save(); g.translate(18, padT + plotH / 2); g.rotate(-Math.PI / 2); g.fillText('P(H) →', 0, 0); g.restore();
+
+  if (!allRecords || allRecords.length === 0) {
+    g.fillStyle = '#7d919b'; g.font = '13px system-ui'; g.textAlign = 'center';
+    g.fillText('暂无记录', W / 2, H / 2);
+    dataROCPoints = [];
+    return;
+  }
+
+  var uidsSeen = [];
+  for (var k0 = 0; k0 < allRecords.length; k0++) {
+    if (uidsSeen.indexOf(allRecords[k0].uid) === -1) uidsSeen.push(allRecords[k0].uid);
+  }
+  var palette = ['#2ee6c4','#ff4d9d','#ffc857','#5aa9ff','#ff6b6b','#b48aff','#8affc9','#ffab6b','#6bcaff','#c9ff5a'];
+  var colorMap = {};
+  for (var u = 0; u < uidsSeen.length; u++) {
+    colorMap[uidsSeen[u]] = palette[u % palette.length];
+  }
+
+  dataROCPoints = [];
+
+  for (var k = 0; k < allRecords.length; k++) {
+    var item = allRecords[k];
+    var pfa = clamp(item.rec.pFA || 0, 0, 1);
+    var ph = clamp(item.rec.pHit || 0, 0, 1);
+
+    var x = padL + plotW * pfa;
+    var y = padT + plotH * (1 - ph);
+    var col = colorMap[item.uid];
+    var dSize = clamp(3 + Math.abs(item.rec.dprime || 0) * 1.5, 3, 8);
+
+    g.fillStyle = col;
+    g.globalAlpha = 0.75;
+    g.beginPath();
+    g.arc(x, y, dSize, 0, Math.PI * 2);
+    g.fill();
+
+    g.globalAlpha = 1;
+    g.strokeStyle = 'rgba(255,255,255,0.4)';
+    g.lineWidth = 0.8;
+    g.beginPath(); g.arc(x, y, dSize, 0, Math.PI * 2); g.stroke();
+
+    dataROCPoints.push({
+      x: x, y: y, r: dSize, index: k,
+      name: item.name, uid: item.uid, rec: item.rec, color: col
+    });
+  }
+
+  var legendEl = $('data-roc-legend');
+  if (legendEl) {
+    var lhtml = '';
+    for (var u2 = 0; u2 < uidsSeen.length; u2++) {
+      var uidL = uidsSeen[u2];
+      var nameL = '';
+      for (var k2 = 0; k2 < allRecords.length; k2++) {
+        if (allRecords[k2].uid === uidL) { nameL = allRecords[k2].name; break; }
+      }
+      lhtml += '<div class="legend-item">' +
+               '<span class="legend-dot" style="background:' + colorMap[uidL] + '"></span>' +
+               '<span>' + escapeHtml(nameL) + '（' + escapeHtml(uidL) + '）</span>' +
+               '</div>';
+    }
+    legendEl.innerHTML = lhtml;
+  }
+}
+
+function onDataROCClick(e) {
+  var cvs = $('canvas-data-roc');
+  if (!cvs || dataROCPoints.length === 0) return;
+
+  var rect = cvs.getBoundingClientRect();
+  var mx = e.clientX - rect.left;
+  var my = e.clientY - rect.top;
+
+  var best = null, bestDist = 14;
+  for (var i = 0; i < dataROCPoints.length; i++) {
+    var p = dataROCPoints[i];
+    var dist = Math.sqrt((p.x - mx) * (p.x - mx) + (p.y - my) * (p.y - my));
+    if (dist < bestDist) { bestDist = dist; best = p; }
+  }
+
+  var tip = $('data-roc-tooltip');
+  if (!tip) return;
+
+  if (best) {
+    var r = best.rec;
+    var tipHtml =
+      '<div class="tip-name">' + escapeHtml(best.name) + '（' + escapeHtml(best.uid) + '）</div>' +
+      '<div class="tip-row">场景<b>' + escapeHtml(r.roleName || r.role || '—') + '</b></div>' +
+      '<div class="tip-row">试次数<b>' + (r.totalTrials || '—') + '</b></div>' +
+      '<div class="tip-row">P(H)<b>' + (typeof r.pHit === 'number' ? r.pHit.toFixed(3) : '—') + '</b></div>' +
+      '<div class="tip-row">P(FA)<b>' + (typeof r.pFA === 'number' ? r.pFA.toFixed(3) : '—') + '</b></div>' +
+      '<div class="tip-row">d′<b>' + (typeof r.dprime === 'number' ? r.dprime.toFixed(2) : '—') + '</b></div>' +
+      '<div class="tip-row">c<b>' + (typeof r.c === 'number' ? r.c.toFixed(2) : '—') + '</b></div>' +
+      '<div class="tip-row">准确率<b>' + (typeof r.acc === 'number' ? (r.acc * 100).toFixed(1) + '%' : '—') + '</b></div>';
+    tip.innerHTML = tipHtml;
+    tip.style.left = best.x + 'px';
+    tip.style.top = (best.y - 12) + 'px';
+    tip.classList.add('show');
+    highlightROCPoint(best.index);
+  } else {
+    tip.classList.remove('show');
+    highlightROCPoint(-1);
+  }
+}
+
+function highlightROCPoint(index) {
+  if (index < 0) {
+    var allRecords = [];
+    for (var i = 0; i < dataROCPoints.length; i++) {
+      allRecords.push({ rec: dataROCPoints[i].rec, name: dataROCPoints[i].name, uid: dataROCPoints[i].uid });
+    }
+    drawAllRecordsROC(allRecords);
+    return;
+  }
+
+  var cvs = $('canvas-data-roc');
+  if (!cvs) return;
+  var p = dataROCPoints[index];
+  if (!p) return;
+  var g = cvs.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  g.strokeStyle = '#ffffff';
+  g.lineWidth = 2.5;
+  g.beginPath();
+  g.arc(p.x, p.y, p.r + 6, 0, Math.PI * 2);
+  g.stroke();
+
+  g.strokeStyle = p.color;
+  g.lineWidth = 2;
+  g.beginPath();
+  g.arc(p.x, p.y, p.r + 10, 0, Math.PI * 2);
+  g.stroke();
+}
+
+function exportCSV() {
+  var db = loadDB();
+  var uids = Object.keys(db);
+
+  if (!state.isAdmin) {
+    if (state.user && db[state.user.studentId]) {
+      var mine = {};
+      mine[state.user.studentId] = db[state.user.studentId];
+      db = mine;
+      uids = [state.user.studentId];
+    } else {
+      alert('你还没有任何实验记录，无法导出。');
+      return;
+    }
+  }
+
+  if (uids.length === 0) {
+    alert('暂无数据可导出。');
+    return;
+  }
+
+  var allRecords = [];
+  for (var u0 = 0; u0 < uids.length; u0++) {
+    var entry = db[uids[u0]];
+    if (!entry || !Array.isArray(entry.records)) continue;
+    for (var j0 = 0; j0 < entry.records.length; j0++) {
+      allRecords.push({ rec: entry.records[j0], name: entry.name || '', uid: uids[u0] });
+    }
+  }
+
+  var sortMode = dataSortMode;
+  allRecords.sort(function (a, b) {
+    if (sortMode === 'time')        return (a.rec.ts || 0) - (b.rec.ts || 0);
+    if (sortMode === 'dprime-desc') return (b.rec.dprime || 0) - (a.rec.dprime || 0);
+    if (sortMode === 'dprime-asc')  return (a.rec.dprime || 0) - (b.rec.dprime || 0);
+    if (sortMode === 'c-desc')      return (b.rec.c || 0) - (a.rec.c || 0);
+    if (sortMode === 'c-asc')       return (a.rec.c || 0) - (b.rec.c || 0);
+    return 0;
+  });
+
+  var headers = ['姓名','学号','序号','时间','场景','试次数','d′设定',
+                 'H','M','FA','CR','P(H)','P(FA)','d′','c','准确率'];
+  var rows = [headers.join(',')];
+
+  for (var k = 0; k < allRecords.length; k++) {
+    var item = allRecords[k];
+    var rec = item.rec;
+    var row = [
+      csvEscape(item.name),
+      csvEscape(item.uid),
+      (k + 1),
+      csvEscape(formatTs(rec.ts)),
+      csvEscape(rec.roleName || rec.role || ''),
+      rec.totalTrials || '',
+      (typeof rec.dprimeSetting === 'number' ? rec.dprimeSetting.toFixed(2) : ''),
+      (rec.H != null ? rec.H : ''),
+      (rec.M != null ? rec.M : ''),
+      (rec.FA != null ? rec.FA : ''),
+      (rec.CR != null ? rec.CR : ''),
+      (typeof rec.pHit === 'number' ? rec.pHit.toFixed(4) : ''),
+      (typeof rec.pFA === 'number' ? rec.pFA.toFixed(4) : ''),
+      (typeof rec.dprime === 'number' ? rec.dprime.toFixed(4) : ''),
+      (typeof rec.c === 'number' ? rec.c.toFixed(4) : ''),
+      (typeof rec.acc === 'number' ? rec.acc.toFixed(4) : '')
+    ];
+    rows.push(row.join(','));
+  }
+
+  var csv = '\uFEFF' + rows.join('\r\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var fname = 'sdt_data_' + (state.isAdmin ? 'all' : (state.user ? state.user.studentId : 'me')) +
+              '_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.href = url;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function csvEscape(s) {
+  s = String(s == null ? '' : s);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+/* ============================================================
+   14. 事件绑定
+   ============================================================ */
+elDprimeSlider.addEventListener('input', function () {
+  var v = parseFloat(elDprimeSlider.value);
+  state.dprimeSetting = v;
+  elDprimeBadge.textContent = 'd′ = ' + v.toFixed(2);
+});
+var trialRadios = document.querySelectorAll('input[name="trials"]');
+for (var i = 0; i < trialRadios.length; i++) {
+  trialRadios[i].addEventListener('change', function () { state.totalTrials = parseInt(this.value, 10); });
+}
+var roleCards = document.querySelectorAll('.role-card');
+for (var r = 0; r < roleCards.length; r++) {
+  roleCards[r].addEventListener('click', function () {
+    if (!state.user) { showScreen('login'); return; }
+    state.role = this.getAttribute('data-role');
+    state.dprimeSetting = parseFloat(elDprimeSlider.value);
+    startGame();
+  });
+}
+elBtnSignal.addEventListener('click', function () { onAnswer(true); });
+elBtnNoise.addEventListener('click', function () { onAnswer(false); });
+document.addEventListener('keydown', function (e) {
+  if (!$('screen-exp').classList.contains('is-active')) return;
+  if (state.phase !== 'respond') return;
+  var k = e.key.toLowerCase();
+  if (k === 'f') { e.preventDefault(); onAnswer(true); }
+  if (k === 'j') { e.preventDefault(); onAnswer(false); }
+});
+function backHome() {
+  runId++; stopBgLoop(); state.phase = 'idle'; state.trial = null; state._trialForScore = null;
+  hideOverlay(); hideFeedback(); elStageContent.innerHTML = '';
+  showScreen('home');
+}
+$('btn-home-2').addEventListener('click', backHome);
+$('btn-home-3').addEventListener('click', backHome);
+$('btn-again').addEventListener('click', function () { if (!state.user) { showScreen('login'); return; } startGame(); });
+$('btn-clear').addEventListener('click', function () {
+  if (!state.user) return;
+  if (!confirm('确认清空当前学号（' + state.user.studentId + '）的全部历史记录？')) return;
+  clearUserRecords(state.user.studentId); drawBarChart([]); drawROC([]);
+});
+
+$('btn-open-concept').addEventListener('click', function () { showScreen('concept'); });
+$('btn-back-home').addEventListener('click', backHome);
+
+$('btn-open-data').addEventListener('click', function () {
+  if (!state.isAdmin) return;
+  showScreen('data');
+});
+$('btn-back-home-data').addEventListener('click', backHome);
+$('btn-refresh-data').addEventListener('click', renderDataPage);
+$('btn-export-csv').addEventListener('click', exportCSV);
+$('btn-clear-all-data').addEventListener('click', function () {
+  if (!state.isAdmin) return;
+  if (!confirm('确认清空所有被试的全部实验数据？此操作不可撤销！')) return;
+  if (!confirm('再次确认：这将会删除所有学号下的全部记录。')) return;
+  saveDB({});
+  renderDataPage();
+});
+
+var sortBtns = document.querySelectorAll('.sort-btn');
+for (var sb = 0; sb < sortBtns.length; sb++) {
+  sortBtns[sb].addEventListener('click', function () {
+    var mode = this.getAttribute('data-sort');
+    dataSortMode = mode;
+    var all = document.querySelectorAll('.sort-btn');
+    for (var k = 0; k < all.length; k++) all[k].classList.remove('active');
+    this.classList.add('active');
+    renderDataPage();
+  });
+}
+
+var rocCanvas = $('canvas-data-roc');
+if (rocCanvas) {
+  rocCanvas.addEventListener('click', onDataROCClick);
+}
+
+document.addEventListener('click', function (e) {
+  var tip = $('data-roc-tooltip');
+  var cvs = $('canvas-data-roc');
+  if (!tip || !cvs) return;
+  if (!cvs.contains(e.target)) {
+    tip.classList.remove('show');
+  }
+});
+
+var tabBtns = document.querySelectorAll('.tab-btn');
+for (var tb = 0; tb < tabBtns.length; tb++) {
+  tabBtns[tb].addEventListener('click', function () {
+    var tab = this.getAttribute('data-tab');
+    var btns = document.querySelectorAll('.tab-btn');
+    for (var b = 0; b < btns.length; b++) btns[b].classList.remove('active');
+    this.classList.add('active');
+    var panels = document.querySelectorAll('.concept-panel');
+    for (var p = 0; p < panels.length; p++) panels[p].classList.remove('active');
+    $('panel-' + tab).classList.add('active');
+    setTimeout(function () {
+      resizeConceptCanvases();
+      if (tab === 'dist') drawDistribution();
+      else if (tab === 'roc') drawConceptROC();
+      else if (tab === 'payoff') { drawPayoff(); drawPayoffChart(); }
+      else if (tab === 'ml') drawML();
+      else if (tab === 'vigilance') drawVigilance(conceptState.vigilance.data);
+    }, 50);
+  });
+}
+
+$('concept-dprime').addEventListener('input', function () {
+  conceptState.dprime = parseFloat(this.value);
+  $('concept-dprime-val').textContent = conceptState.dprime.toFixed(1);
+  redrawActivePanel();
+});
+$('concept-c').addEventListener('input', function () {
+  conceptState.c = parseFloat(this.value);
+  $('concept-c-val').textContent = conceptState.c.toFixed(2);
+  redrawActivePanel();
+});
+$('concept-ps').addEventListener('input', function () {
+  conceptState.ps = parseFloat(this.value);
+  $('concept-ps-val').textContent = conceptState.ps.toFixed(2);
+  drawPayoff(); drawPayoffChart();
+});
+['pay-vh', 'pay-vm', 'pay-vfa', 'pay-vcr'].forEach(function (id) {
+  $(id).addEventListener('input', function () {
+    conceptState.payoffs.VH = parseFloat($('pay-vh').value) || 0;
+    conceptState.payoffs.VM = parseFloat($('pay-vm').value) || 0;
+    conceptState.payoffs.VFA = parseFloat($('pay-vfa').value) || 0;
+    conceptState.payoffs.VCR = parseFloat($('pay-vcr').value) || 0;
+    drawPayoff(); drawPayoffChart();
+  });
+});
+$('btn-run-vig').addEventListener('click', function () {
+  resizeConceptCanvases();
+  runVigilance();
+});
+
+function redrawActivePanel() {
+  var active = document.querySelector('.concept-panel.active');
+  if (!active) return;
+  var id = active.id;
+  if (id === 'panel-dist') drawDistribution();
+  else if (id === 'panel-roc') drawConceptROC();
+  else if (id === 'panel-payoff') drawPayoff();
+  else if (id === 'panel-ml') drawML();
+  else if (id === 'panel-vigilance') drawVigilance(conceptState.vigilance.data);
+}
+
+/* ============================================================
+   15. 初始化
+   ============================================================ */
+(function init() {
+  var active = loadActiveUser();
+  if (active) { $('login-name').value = active.name; $('login-id').value = active.studentId; }
+  setTimeout(function () { $('login-name').focus(); }, 120);
+
+  updateAdminUI();
+
+  if (window.console && console.table) {
+    console.table([
+      { p: 0.025, z: +zFromP(0.025).toFixed(4), expect: -1.9600 },
+      { p: 0.25,  z: +zFromP(0.25).toFixed(4),  expect: -0.6745 },
+      { p: 0.50,  z: +zFromP(0.50).toFixed(4),  expect:  0.0000 },
+      { p: 0.75,  z: +zFromP(0.75).toFixed(4),  expect:  0.6745 },
+      { p: 0.975, z: +zFromP(0.975).toFixed(4), expect:  1.9600 }
+    ]);
+  }
+})();
+
+})();
+</script>
+</body>
+</html>
