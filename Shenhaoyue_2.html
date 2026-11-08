@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工程心理学 - 我的注意实验室</title>
+    <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
+    
+    <style>
+        /* =========================================
+           全局与基础样式 (高级灰 + 暗红)
+           ========================================= */
+        :root {
+            --primary-dark: #1e1e1e;
+            --primary-red: #c62828;
+            --bg-gray: #f2f2f2;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-light: #777777;
+            --success-green: #2e7d32;
+        }
+        body {
+            margin: 0; padding: 0; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-gray); color: var(--text-main);
+        }
+        
+        /* 顶部导航 */
+        .navbar {
+            background-color: var(--primary-dark); color: white;
+            display: flex; align-items: center; padding: 0 40px; height: 64px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 1000;
+        }
+        .navbar .logo { font-size: 20px; font-weight: bold; margin-right: 40px; display: flex; align-items: center;}
+        .navbar .logo span { color: var(--primary-red); margin-right: 10px; font-size: 24px;}
+        .nav-links a {
+            color: #aaa; text-decoration: none; margin-right: 30px; font-size: 15px;
+            transition: color 0.2s; cursor: pointer; font-weight: 500;
+        }
+        .nav-links a.active { color: white; border-bottom: 2px solid var(--primary-red); padding-bottom: 21px;}
+        .nav-links a:hover { color: white; }
+        
+        .user-info { margin-left: auto; font-size: 14px; color: #ccc; background: rgba(255,255,255,0.1); padding: 6px 16px; border-radius: 4px;}
+        .user-info span { color: var(--primary-red); font-weight: bold; }
+
+        .hero {
+            background: linear-gradient(135deg, #2b2b2b, #151515);
+            color: white; padding: 50px 40px; border-bottom: 4px solid var(--primary-red);
+        }
+        .hero h1 { margin: 0 0 15px 0; font-size: 36px; font-weight: 300; letter-spacing: 1px;}
+        .hero p { margin: 0; color: #aaa; font-size: 16px; }
+
+        .main-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-title { font-size: 22px; margin-bottom: 10px; color: var(--primary-dark); border-left: 4px solid var(--primary-red); padding-left: 12px;}
+        .section-subtitle { font-size: 14px; color: var(--text-light); margin-top: 0; margin-bottom: 30px; padding-left: 16px;}
+        .experiment-grid { display: flex; gap: 30px; flex-wrap: wrap;}
+        
+        .exp-card {
+            background: var(--card-bg); border-radius: 8px; padding: 30px;
+            width: 320px; box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid #eee; border-top: 4px solid var(--primary-red);
+            position: relative; display: flex; flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .exp-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        
+        .card-header { display: flex; align-items: center; margin-bottom: 20px; }
+        .card-num {
+            width: 32px; height: 32px; border-radius: 50%; background: var(--primary-red);
+            color: white; display: flex; justify-content: center; align-items: center;
+            font-weight: bold; margin-right: 12px; font-size: 16px;
+        }
+        .card-status { font-size: 13px; color: var(--success-green); margin-left: auto; font-weight: bold;}
+
+        .exp-card h3 { margin: 0 0 15px 0; font-size: 20px; color: var(--primary-dark); }
+        .exp-card p { margin: 0 0 20px 0; font-size: 14px; color: var(--text-light); line-height: 1.6; flex-grow: 1; }
+        .tags { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;}
+        .tag { background: #f0f0f0; color: #555; font-size: 12px; padding: 4px 10px; border-radius: 4px; font-weight: 500; }
+        
+        .btn-start {
+            background: var(--primary-red); color: white; border: none; padding: 12px; border-radius: 4px; 
+            font-size: 16px; cursor: pointer; width: 100%; transition: background 0.2s; font-weight: bold; letter-spacing: 1px;
+        }
+        .btn-start:hover { background: #a51c1c; }
+
+        .concept-card {
+            background: white; border-radius: 8px; padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 30px;
+            border-left: 6px solid var(--primary-red);
+        }
+        .concept-card h3 { color: var(--primary-dark); margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 15px; font-size: 22px;}
+        .concept-card h4 { color: var(--primary-red); margin-bottom: 10px; margin-top: 30px; font-size: 18px;}
+        .concept-card p { color: var(--text-main); line-height: 1.8; font-size: 15px; margin-top: 5px;}
+
+        /* =========================================
+           通用全屏容器与按钮
+           ========================================= */
+        .fullscreen-exp {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #1a1a1a; z-index: 99999; overflow: hidden;
+        }
+        .screen {
+            display: none; width: 800px; height: 600px; background: white;
+            border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            padding: 40px; box-sizing: border-box; text-align: center;
+            flex-direction: column; justify-content: center; align-items: center;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100;
+            overflow-y: auto;
+        }
+        .screen.active { display: flex; }
+        .btn-exit { position: absolute; top: 20px; right: 20px; z-index: 10000; background: #c62828 !important; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;}
+        #rider-experiment-container button, #posner-experiment-container button { padding: 10px 24px; font-size: 18px; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 10px; transition: background 0.2s; }
+        #rider-experiment-container h1, #posner-experiment-container h1 { color: #333; }
+        #rider-experiment-container p, #posner-experiment-container p { font-size: 18px; line-height: 1.6; color: #555;}
+
+        /* =========================================
+           实验一：骑手分心驾驶
+           ========================================= */
+        #experiment-screen {
+            width: 100vw; height: 100vh; padding: 0; border-radius: 0;
+            background-color: #2c3e50; top: 0; left: 0; transform: none; cursor: none; z-index: 9999; position: absolute;
+        }
+        .windshield { position: absolute; top: 0; left: 5%; width: 90%; height: 65%; background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 40%, #444 40%, #333 100%); border-radius: 0 0 20px 20px; overflow: hidden; }
+        .road-lines { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 20px; height: 60%; background: repeating-linear-gradient(to bottom, white 0, white 30px, transparent 30px, transparent 60px); opacity: 0.6; }
+        .mirror { position: absolute; top: 15%; width: 18%; height: 20%; background-color: #111; border: 10px solid #222; border-radius: 15px; box-shadow: inset 0 0 20px rgba(0,0,0,1), 0 4px 10px rgba(0,0,0,0.5); overflow: hidden; z-index: 20; }
+        .mirror.left { left: 2%; } .mirror.right { right: 2%; }
+        .mirror-bg { width: 100%; height: 100%; background: linear-gradient(to bottom, #6cb3d9 0%, #6cb3d9 50%, #222 50%, #222 100%); }
+        .road-stimulus { position: absolute; font-size: 120px; opacity: 0; z-index: 15; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94); pointer-events: none; }
+        .stim-center { left: 50%; top: 60%; transform: translate(-50%, -50%) scale(0.1); }
+        .stim-center.show { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+        .stim-left-road { left: 25%; top: 65%; transform: translate(-50%, -50%) scale(0.1); }
+        .stim-left-road.show { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+        .stim-right-road { right: 25%; top: 65%; transform: translate(50%, -50%) scale(0.1); }
+        .stim-right-road.show { opacity: 1; transform: translate(50%, -50%) scale(1.2); }
+        .dashboard { position: absolute; bottom: 0; left: 0; width: 100%; height: 35%; background: #1a1a1a; border-top: 5px solid #333; z-index: 5; }
+        .steering-wheel { position: absolute; bottom: -50px; left: 50%; transform: translateX(-50%); width: 300px; height: 300px; border-radius: 50%; border: 40px solid #222; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+        .instrument-cluster { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 400px; height: 120px; background: #000; border-radius: 20px; border: 2px solid #333; display: flex; justify-content: space-around; align-items: center; color: #00ffcc; font-family: monospace; font-size: 24px; }
+        .phone-ui { position: absolute; bottom: -300px; left: 50%; transform: translateX(-50%); width: 300px; height: 150px; background-color: #111; border-radius: 20px 20px 0 0; border: 2px solid #555; color: white; padding: 20px; box-sizing: border-box; text-align: center; transition: bottom 0.3s ease-in-out; z-index: 30; }
+        .phone-ui.active { bottom: 0; }
+        .phone-prompt { display: none; background-color: #c62828; color: white; padding: 15px; border-radius: 10px; font-size: 20px; font-weight: bold; animation: flash 0.5s infinite alternate; }
+        .phone-prompt.active { display: block; }
+        @keyframes flash { from { background-color: #c62828; } to { background-color: #8e0000; } }
+        #result-screen { width: 90vw; height: 90vh; overflow-y: auto; align-items: flex-start; }
+        .stats-box { display: flex; justify-content: space-around; width: 100%; margin-top: 20px;}
+        .stat-card { background: #fafafa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; width: 30%;}
+
+        /* ======== 通用眼动校准样式 ======== */
+        #calibration-screen, #posner-calibration { 
+            display: none; 
+            background-color: #222; color: white; 
+            position: absolute; top: 0; left: 0; 
+            width: 100vw; height: 100vh; 
+            overflow: hidden; z-index: 1000; 
+        }
+        #calibration-screen.active, #posner-calibration.active { display: block; }
+        
+        #webgazerVideoContainer { position: absolute !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; width: 320px !important; height: 240px !important; z-index: 99999 !important; border: 3px solid #c62828; border-radius: 4px; overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.8); background-color: #000; }
+        .calib-header { position: absolute; bottom: 20px; width: 100%; text-align: center; z-index: 100; color: white; pointer-events: none; }
+        .calib-header h2 { margin: 0 0 10px 0; color: #fff;} .calib-header p { color: #ccc; margin: 5px 0; font-size: 16px;}
+        .calib-point { position: absolute; width: 50px; height: 50px; background-color: #c62828; border-radius: 50%; cursor: pointer; transform: translate(-50%, -50%) scale(1.4); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 20px rgba(198, 40, 40, 0.8); z-index: 50; display: flex; justify-content: center; align-items: center; }
+        .calib-point.clicked { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        .calib-point-num { color: white; font-weight: bold; font-size: 24px; pointer-events: none; }
+
+        /* =========================================
+           实验二：Posner HUD
+           ========================================= */
+        #posner-game-screen {
+            width: 100vw; height: 100vh; padding: 0; border-radius: 0;
+            background-color: #050914; top: 0; left: 0; transform: none;
+            cursor: none; z-index: 9999; position: absolute; overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .posner-bg {
+            position: absolute; width: 100%; height: 100%;
+            background: 
+                linear-gradient(to bottom, rgba(5,9,20,0) 40%, rgba(5,9,20,1) 90%),
+                repeating-linear-gradient(to right, rgba(0,255,255,0.05) 0, rgba(0,255,255,0.05) 1px, transparent 1px, transparent 40px),
+                repeating-linear-gradient(to bottom, rgba(0,255,255,0.05) 0, rgba(0,255,255,0.05) 1px, transparent 1px, transparent 40px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+            perspective: 500px;
+        }
+        .posner-horizon {
+            position: absolute; top: 40%; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, #00e5ff, transparent);
+            box-shadow: 0 0 20px #00e5ff;
+        }
+
+        /* 中央 HUD 注视点 */
+        .posner-fixation {
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            width: 40px; height: 40px; z-index: 10; display: none;
+        }
+        .posner-fixation::before, .posner-fixation::after {
+            content: ''; position: absolute; background-color: #00e5ff; box-shadow: 0 0 8px #00e5ff;
+        }
+        .posner-fixation::before { top: 50%; left: 0; width: 100%; height: 2px; transform: translateY(-50%); }
+        .posner-fixation::after { left: 50%; top: 0; width: 2px; height: 100%; transform: translateX(-50%); }
+
+        /* 极高亮中央箭头 */
+        .posner-cue-central {
+            position: absolute; top: 25%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 140px; color: #ffea00; font-weight: bold; z-index: 10; display: none;
+            text-shadow: 0 0 30px #ffea00, 0 0 60px #ff9800;
+            animation: pulseCue 0.4s infinite alternate;
+        }
+        @keyframes pulseCue { from { opacity: 0.8; transform: translate(-50%, -50%) scale(0.95); } to { opacity: 1; transform: translate(-50%, -50%) scale(1.15); } }
+
+        /* 外周线索 */
+        .posner-cue-peripheral {
+            position: absolute; top: 0; width: 15%; height: 100%; 
+            z-index: 5; display: none; overflow: hidden;
+        }
+        .posner-cue-peripheral.left { left: 0; background: linear-gradient(to right, rgba(255,0,0,0.4), transparent); border-left: 4px solid #ff0033; }
+        .posner-cue-peripheral.right { right: 0; background: linear-gradient(to left, rgba(255,0,0,0.4), transparent); border-right: 4px solid #ff0033; }
+        .posner-cue-peripheral::after {
+            content: ''; position: absolute; top: 0; width: 100%; height: 10px;
+            background: #ff0033; box-shadow: 0 0 20px #ff0033;
+            animation: scanline 0.8s linear infinite;
+        }
+        @keyframes scanline { 0% { top: -10%; } 100% { top: 110%; } }
+
+        /* 目标锁定框 */
+        .posner-target-reticle {
+            position: absolute; top: 55%; width: 140px; height: 140px;
+            border: 2px dashed rgba(0, 229, 255, 0.5); border-radius: 50%;
+            z-index: 8; display: none; transform: translate(-50%, -50%);
+            animation: rotate 4s linear infinite;
+        }
+        .posner-target-reticle.left { left: 25%; }
+        .posner-target-reticle.right { left: 75%; }
+        .posner-target-reticle::before, .posner-target-reticle::after { content: ''; position: absolute; background: #00e5ff; }
+        .posner-target-reticle::before { top: 50%; left: -10%; width: 120%; height: 2px; }
+        .posner-target-reticle::after { left: 50%; top: -10%; width: 2px; height: 120%; }
+        @keyframes rotate { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        /* 目标 */
+        .posner-target {
+            position: absolute; top: 55%; font-size: 90px; z-index: 10; display: none;
+            filter: drop-shadow(0 0 15px #00e5ff);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .posner-target.left { left: 25%; } .posner-target.right { left: 75%; }
+        .posner-target.show { display: block; transform: translate(-50%, -50%) scale(1); }
+
+        /* 心算任务 UI */
+        .posner-math-ui {
+            position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 229, 255, 0.1); backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 229, 255, 0.4); color: #00e5ff;
+            padding: 15px 40px; border-radius: 8px; font-size: 32px; font-family: monospace;
+            z-index: 20; display: none; box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+            letter-spacing: 2px; text-align: center;
+        }
+        .posner-math-ui span { font-size: 16px; color: #889; display: block; margin-top: 5px; letter-spacing: 1px;}
+
+        /* 结果页的图表容器 */
+        .viz-container { width: 100%; display: flex; justify-content: space-around; margin-top: 20px; flex-wrap: wrap; gap: 20px;}
+        .viz-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; width: 45%;}
+        #gazeCanvas { border: 1px solid #ddd; background: #111; border-radius: 8px; display: block; width: 100%; }
+        
+        table.data-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; border-radius: 8px; overflow: hidden;}
+        table.data-table th, table.data-table td { border: 1px solid #eee; padding: 12px; text-align: center; font-size: 15px;}
+        table.data-table th { background-color: #f8f9fa; color: #333; font-weight: bold;}
+        table.data-table tr:nth-child(even) { background-color: #fafafa; }
+
+    </style>
+</head>
+<body>
+
+    <!-- 顶部导航 -->
+    <div class="navbar" id="main-navbar">
+        <div class="logo"><span>◎</span> 注意实验室</div>
+        <div class="nav-links">
+            <a onclick="switchView('lobby')" id="nav-lobby" class="active">实验大厅</a>
+            <a onclick="switchView('concept')" id="nav-concept">概念实验室</a>
+            <a onclick="alert('这里是你的历史数据记录页（暂未开发）')">我的结果</a>
+        </div>
+        <div class="user-info">当前被试编号: <span id="display-participant-id">P00000</span></div>
+    </div>
+
+    <!-- 视图一：实验大厅 -->
+    <div id="view-lobby" class="view-section active">
+        <div class="hero">
+            <h1>实验大厅 · 看见与看不见</h1>
+            <p>工程心理学 - 感知与注意个人实验项目</p>
+        </div>
+
+        <div class="main-container">
+            <h2 class="section-title">实验列表</h2>
+            <p class="section-subtitle">请按顺序完成实验。您的所有数据将被严格保密，并以匿名形式上传。</p>
+            
+            <div class="experiment-grid">
+                <!-- 实验一 -->
+                <div class="exp-card" id="card-exp1">
+                    <div class="card-header">
+                        <div class="card-num">1</div>
+                        <div class="card-status" id="status-exp1">未完成</div>
+                    </div>
+                    <h3>模拟外卖骑手分心驾驶</h3>
+                    <p>测试在接单（次任务）状态下，驾驶员对正前方及两侧车道来车/行人的漏报率与反应时，并记录眼动轨迹。</p>
+                    <div class="tags">
+                        <span class="tag">SEEV模型</span><span class="tag">双任务</span><span class="tag">眼动追踪</span>
+                    </div>
+                    <button class="btn-start" onclick="enterExperimentOne()">开始实验</button>
+                </div>
+
+                <!-- 实验二 -->
+                <div class="exp-card" id="card-exp2">
+                    <div class="card-header">
+                        <div class="card-num">2</div>
+                        <div class="card-status" id="status-exp2">未完成</div>
+                    </div>
+                    <h3>车载 HUD 预警与注意线索</h3>
+                    <p>复现 Posner 线索范式：探究在高低认知负荷下，中央符号提示（导航）与外周闪烁预警对驾驶危险探测的影响。</p>
+                    <div class="tags">
+                        <span class="tag">Posner范式</span><span class="tag">返回抑制(IOR)</span><span class="tag">眼动可视化</span>
+                    </div>
+                    <button class="btn-start" onclick="enterExperimentTwo()">开始实验</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 视图二：概念实验室 -->
+    <div id="view-concept" class="view-section">
+        <div class="hero" style="background: linear-gradient(135deg, #2b2b2b, #151515);">
+            <h1>概念实验室 · 理论背景</h1>
+            <p>在这里探索经典工程心理学理论，以及它们是如何在我们的实验设计中落地的。</p>
+        </div>
+
+        <div class="main-container">
+            <div class="concept-card">
+                <h3>实验一：模拟外卖骑手分心驾驶</h3>
+                <p>核心探究<b>分心驾驶（Distracted Driving）</b>对视觉注意和反应执行的影响。</p>
+                <h4>💡 多任务处理与资源分配理论</h4>
+                <p>人的认知资源有限。看手机接单（次任务）会剥夺视觉资源，导致对周边环境探测能力下降，表现为<b>反应时变长、漏报率升高</b>。</p>
+                <h4>💡 SEEV 模型</h4>
+                <p>注意力优先分配给显著性（Salience）高的马路车辆，以及价值（Value）高的手机订单，两者相互争夺资源。</p>
+            </div>
+
+            <div class="concept-card">
+                <h3>实验二：车载 HUD 预警与注意线索</h3>
+                <p>模拟平视显示器（HUD）系统，探究不同线索类型在不同认知负荷下的有效性。</p>
+                <h4>💡 Posner 线索范式与注意聚光灯</h4>
+                <p>中央线索（如导航箭头）依赖<b>内生意向（Endogenous）</b>，需要认知解读，指对时产生“收益”，指错时产生巨大“代价”。外周线索（如盲区闪烁）依赖<b>外生捕获（Exogenous）</b>，自动吸引注意。</p>
+                <h4>💡 返回抑制 (IOR)</h4>
+                <p>外周线索在长 SOA（如 600ms）后，如果指对了位置，反应反而会变慢，因为大脑为了防止注意卡死，会强制把注意力从原位置移开。</p>
+                <h4>💡 认知负荷 (Cognitive Load) 的影响</h4>
+                <p>当我们在心算（高负荷）时，工作记忆被占用，可能导致我们更难以解读中央箭头的含义，但外周闪烁可能依然能“吓”到我们，从而表现出不一样的交互效应。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 实验一容器 -->
+    <div id="rider-experiment-container" class="fullscreen-exp">
+        <button class="btn-exit" onclick="exitExperimentOne()">✖ 退出实验</button>
+        <div id="consent-screen" class="screen active">
+            <h1>欢迎参加模拟驾驶实验</h1>
+            <p>本实验模拟外卖骑手骑车场景。<br>注意正前方及两侧马路的车辆/行人，看到请按 <b>【空格键】</b>。<br>在部分阶段，如果手机亮起红色，请按 <b>【F键】</b>。</p>
+            <button onclick="showScreen('setup-screen')">我已了解，下一步</button>
+        </div>
+        <div id="setup-screen" class="screen">
+            <h1>选择数据采集方式</h1>
+            <p>为了记录您的注意力分配情况，请选择一种追踪模式：</p>
+            <div>
+                <button onclick="startWebGazer()" style="background-color: #c62828;">开启摄像头 (眼动追踪)</button>
+                <button onclick="startMouseTracking()" style="background-color: #333;">使用鼠标位置代替</button>
+            </div>
+        </div>
+        
+        <!-- 实验一校准 -->
+        <div id="calibration-screen">
+            <div id="calib-prepare" style="position: absolute; top: 75%; left: 50%; transform: translateX(-50%); text-align: center; z-index: 200; width: 100%;">
+                <p id="calib-status-text" style="color: #fff; font-size: 20px; margin-bottom: 20px;">正在启动摄像头...</p>
+                <button id="start-calib-btn" onclick="beginActualCalibration()" style="display: none; padding: 15px 30px; font-size: 20px; background-color: #c62828;">我已在中间看到脸，开始校准</button>
+                <button id="fallback-btn" onclick="startMouseTracking()" style="display: none; background-color: #333; margin-top: 20px;">一直没画面？点此切换为鼠标模式</button>
+            </div>
+            <div id="calib-points-container"></div>
+            <div class="calib-header" id="calib-header-text" style="display:none;">
+                <h2>眼动校准</h2>
+                <p>红点会依次出现，请眼睛盯住红点，<b>用鼠标连续点击它 5 次</b>。</p>
+                <p id="calib-progress" style="color: #c62828; font-size: 20px; font-weight: bold;">准备中...</p>
+            </div>
+        </div>
+
+        <div id="instruction-screen" class="screen">
+            <h1 id="phase-title">第一阶段：基线测试</h1>
+            <p id="phase-desc">请留意正前方马路。看到车或人，请按【空格键】。</p>
+            <button id="start-trial-btn">开始试次</button>
+        </div>
+        <div id="experiment-screen" class="screen">
+            <div class="windshield">
+                <div class="road-lines"></div>
+                <div id="stim-center" class="road-stimulus stim-center"></div>
+                <div id="stim-left-road" class="road-stimulus stim-left-road"></div>
+                <div id="stim-right-road" class="road-stimulus stim-right-road"></div>
+            </div>
+            <div class="mirror left"><div class="mirror-bg"></div></div>
+            <div class="mirror right"><div class="mirror-bg"></div></div>
+            <div class="dashboard">
+                <div class="steering-wheel"></div>
+                <div class="instrument-cluster"><div>SPEED<br>25 km/h</div><div>RPM<br>2200</div></div>
+            </div>
+            <div id="phone" class="phone-ui">
+                <h3 style="margin:0; color:#aaa;">美团外卖</h3>
+                <div id="phone-prompt" class="phone-prompt">新订单！按 F</div>
+            </div>
+        </div>
+        <div id="result-screen" class="screen">
+            <h1>实验结束，感谢参与！</h1>
+            <p id="upload-status" style="color: #2e7d32; font-weight: bold; margin: 20px 0;">正在上传数据...</p>
+            <button id="download-btn" onclick="downloadLocalCSV()" style="display: none; background-color: #e67e22;">下载我的数据 (CSV)</button>
+            <div class="stats-box" id="data-display" style="display:none;">
+                <div class="stat-card"><h3>无手机干扰</h3><p>平均反应时: <span id="rt-baseline">0</span> ms</p><p>漏报率: <span id="miss-baseline">0</span> %</p><p>错报次数: <span id="fa-baseline" style="color: #c62828;">0</span></p></div>
+                <div class="stat-card"><h3>有手机干扰</h3><p>平均反应时: <span id="rt-distraction">0</span> ms</p><p>漏报率: <span id="miss-distraction">0</span> %</p><p>错报次数: <span id="fa-distraction" style="color: #c62828;">0</span></p></div>
+            </div>
+            <p id="conclusion" style="display:none; color: #c62828; font-weight: bold;"></p>
+            <button onclick="returnToLobby()" style="background-color: #333; margin-top: 30px;">返回实验室大厅</button>
+        </div>
+    </div>
+
+    <!-- 实验二容器 -->
+    <div id="posner-experiment-container" class="fullscreen-exp">
+        <button class="btn-exit" onclick="exitExperimentTwo()">✖ 退出实验</button>
+
+        <div id="posner-consent" class="screen active">
+            <h1>实验二：车载 HUD 预警与注意线索</h1>
+            <p>本实验模拟驾驶时的 HUD 预警系统。<br><br>
+            <b>主任务：</b>盯住屏幕中心的十字。当道路左侧或右侧出现行人/车辆时，请立刻按 <b>【空格键】</b>。<br>
+            <b>提示线索：</b>目标出现前，会有“中央箭头”或“外周边框闪烁”提示。<br>
+            <b>心算任务（仅部分阶段）：</b>屏幕上方会出现数学等式，你需要快速判断对错（对按 <b>【F键】</b>，错按 <b>【J键】</b>）。</p>
+            <button onclick="document.getElementById('posner-consent').classList.remove('active'); document.getElementById('posner-setup').classList.add('active');" style="background-color: #c62828;">我已了解，下一步</button>
+        </div>
+
+        <div id="posner-setup" class="screen">
+            <h1>选择数据采集方式</h1>
+            <p>为了记录您的注意力分配情况，请选择一种追踪模式：</p>
+            <div>
+                <button onclick="startPosnerWebGazer()" style="background-color: #c62828;">开启摄像头 (眼动追踪)</button>
+                <button onclick="startPosnerMouseTracking()" style="background-color: #333;">使用鼠标位置代替</button>
+            </div>
+        </div>
+
+        <div id="posner-calibration">
+            <div id="p-calib-prepare" style="position: absolute; top: 75%; left: 50%; transform: translateX(-50%); text-align: center; z-index: 200; width: 100%;">
+                <p id="p-calib-status-text" style="color: #fff; font-size: 20px; margin-bottom: 20px;">正在启动摄像头...</p>
+                <button id="p-start-calib-btn" onclick="beginPosnerCalibration()" style="display: none; padding: 15px 30px; font-size: 20px; background-color: #c62828;">我已在中间看到脸，开始校准</button>
+                <button id="p-fallback-btn" onclick="startPosnerMouseTracking()" style="display: none; background-color: #333; margin-top: 20px;">一直没画面？点此切换为鼠标模式</button>
+            </div>
+            <div id="p-calib-points-container"></div>
+            <div class="calib-header" id="p-calib-header-text" style="display:none;">
+                <h2>眼动校准</h2>
+                <p>红点会依次出现，请眼睛盯住红点，<b>用鼠标连续点击它 5 次</b>。</p>
+                <p id="p-calib-progress" style="color: #c62828; font-size: 20px; font-weight: bold;">准备中...</p>
+            </div>
+        </div>
+
+        <div id="posner-instruction" class="screen">
+            <h1 id="posner-phase-title">第一阶段：低认知负荷</h1>
+            <p id="posner-phase-desc">请专注驾驶。发现目标后按空格。</p>
+            <button onclick="startPosnerTrials()">开始试次</button>
+        </div>
+
+        <div id="posner-game-screen" class="screen">
+            <div class="posner-bg">
+                <div class="posner-horizon"></div>
+                <div id="posner-cue-left" class="posner-cue-peripheral left"></div>
+                <div id="posner-cue-right" class="posner-cue-peripheral right"></div>
+                <div id="posner-fixation" class="posner-fixation"></div>
+                <div id="posner-cue-central" class="posner-cue-central"></div>
+                <div id="posner-reticle-left" class="posner-target-reticle left"></div>
+                <div id="posner-reticle-right" class="posner-target-reticle right"></div>
+                <div id="posner-target-left" class="posner-target left"></div>
+                <div id="posner-target-right" class="posner-target right"></div>
+            </div>
+            <div id="posner-math-ui" class="posner-math-ui">
+                <div id="math-text">--</div>
+                <span>判断对错: F / J</span>
+            </div>
+        </div>
+
+        <div id="posner-result" class="screen" style="width: 90vw; align-items: flex-start;">
+            <h1>实验二结束！</h1>
+            <p id="posner-upload-status" style="color: #2e7d32; font-weight: bold; margin: 10px 0;">正在上传数据...</p>
+            <button id="posner-download-btn" onclick="downloadPosnerCSV()" style="display: none; background-color: #e67e22; margin-bottom: 20px;">下载所有数据 (CSV)</button>
+            
+            <div class="viz-container">
+                <div class="viz-card">
+                    <h3>👁️ 你的眼动轨迹图 (Scanpath)</h3>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 10px;">青色点代表低负荷视线，黄色点为高负荷视线，中心青色十字为准星位置。</p>
+                    <canvas id="gazeCanvas"></canvas>
+                </div>
+                
+                <div class="viz-card">
+                    <h3>📊 你的线索效应数据 (反应时)</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>线索类型</th>
+                                <th>有效性</th>
+                                <th>平均 RT (ms)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>中央箭头 (低负荷)</td><td>有效</td><td id="p-c-low-val">0</td></tr>
+                            <tr><td>中央箭头 (低负荷)</td><td>无效</td><td id="p-c-low-inv">0</td></tr>
+                            <tr><td>中央箭头 (高负荷)</td><td>有效</td><td id="p-c-high-val">0</td></tr>
+                            <tr><td>中央箭头 (高负荷)</td><td>无效</td><td id="p-c-high-inv">0</td></tr>
+                            <tr><td>外周闪烁 (低负荷)</td><td>有效</td><td id="p-p-low-val">0</td></tr>
+                            <tr><td>外周闪烁 (低负荷)</td><td>无效</td><td id="p-p-low-inv">0</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size: 13px; color: #666; margin-top: 10px;">* 收益 = 无效 RT - 有效 RT。收益越大，说明线索越有用。</p>
+                </div>
+            </div>
+
+            <button onclick="returnToLobby()" style="background-color: #333; margin-top: 30px; align-self: center;">返回实验室大厅</button>
+        </div>
+    </div>
+
+
+    <script>
+        // =========================================
+        // 全局与大厅逻辑
+        // =========================================
+        const participantId = 'P' + Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+        document.getElementById('display-participant-id').innerText = participantId;
+        const PROJECT_CODE = '8ND8J8';
+        const API_URL = 'https://attention-lab-production.up.railway.app/api/hw2/submit';
+        const DATA_URL = 'https://attention-lab-production.up.railway.app/api/hw2/data';
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-links a').forEach(el => el.classList.remove('active'));
+            if(viewName === 'lobby') {
+                document.getElementById('view-lobby').classList.add('active');
+                document.getElementById('nav-lobby').classList.add('active');
+            } else if (viewName === 'concept') {
+                document.getElementById('view-concept').classList.add('active');
+                document.getElementById('nav-concept').classList.add('active');
+            }
+        }
+
+        function returnToLobby() {
+            document.body.style.overflow = 'auto';
+            document.querySelectorAll('.fullscreen-exp').forEach(el => el.style.display = 'none');
+            document.getElementById('main-navbar').style.display = 'flex';
+            document.getElementById('view-lobby').style.display = 'block'; 
+            clearTimeout(pTrialTimeout); clearTimeout(pCueTimeout); clearTimeout(pTargetTimeout);
+        }
+
+        // =========================================
+        // 实验一逻辑
+        // =========================================
+        function enterExperimentOne() {
+            document.getElementById('main-navbar').style.display = 'none';
+            document.getElementById('view-lobby').style.display = 'none'; 
+            document.getElementById('view-concept').style.display = 'none';
+            document.body.style.overflow = 'hidden'; 
+            document.getElementById('rider-experiment-container').style.display = 'block';
+            document.querySelectorAll('#rider-experiment-container .screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('consent-screen').classList.add('active');
+            document.getElementById('calibration-screen').classList.remove('active');
+            document.querySelector('#rider-experiment-container .btn-exit').style.display = 'block'; 
+            document.getElementById('status-exp1').innerText = "已完成";
+            document.getElementById('card-exp1').style.borderTopColor = "#2e7d32";
+        }
+
+        function exitExperimentOne() {
+            if(confirm("实验尚未完成，确定要退出吗？")) {
+                returnToLobby();
+                if (trackingMode === 'webgazer') { try { webgazer.end(); } catch(e) {} }
+            }
+        }
+
+        let allTrialsData = []; 
+        let currentPhase = 'baseline'; 
+        let currentTrial = 0;
+        const totalTrialsPerPhase = 15; 
+        let trackingMode = 'mouse'; 
+        let stimAppearTime = 0;
+        let currentStimSide = 'none'; 
+        let phoneAppearTime = 0;
+        let stimResponded = false;
+        let phoneResponded = false;
+        let trialTimeout = null;
+        let isFalseAlarmCurrentTrial = false;
+        let spaceKeyPressed = false; 
+        let currentGazePoints = [];
+        let lastGazeRecordTime = 0;
+
+        const screens1 = document.querySelectorAll('#rider-experiment-container .screen');
+        const stimCenterEl = document.getElementById('stim-center');
+        const stimLeftRoadEl = document.getElementById('stim-left-road');
+        const stimRightRoadEl = document.getElementById('stim-right-road');
+        const phoneEl = document.getElementById('phone');
+        const phonePromptEl = document.getElementById('phone-prompt');
+        const phaseTitle = document.getElementById('phase-title');
+        const phaseDesc = document.getElementById('phase-desc');
+        const stimuliPool = ['🚗', '🚙', '🏍️', '🚶'];
+
+        function showScreen(id) {
+            screens1.forEach(s => s.classList.remove('active'));
+            document.getElementById('calibration-screen').classList.remove('active');
+            document.querySelector('#rider-experiment-container .btn-exit').style.display = (id === 'calibration-screen') ? 'none' : 'block';
+            if (id === 'calibration-screen') { document.getElementById('calibration-screen').classList.add('active'); } 
+            else { document.getElementById(id).classList.add('active'); }
+        }
+
+        function startMouseTracking() {
+            trackingMode = 'mouse';
+            try { webgazer.end(); } catch(e) {}
+            document.addEventListener('mousemove', (e) => {
+                if (document.getElementById('experiment-screen').classList.contains('active')) {
+                    let now = performance.now();
+                    if (now - lastGazeRecordTime > 100) {
+                        currentGazePoints.push({ x: e.clientX, y: e.clientY, t: now });
+                        lastGazeRecordTime = now;
+                    }
+                }
+            });
+            goToInstruction('baseline');
+        }
+
+        function startWebGazer() {
+            trackingMode = 'webgazer';
+            showScreen('calibration-screen');
+            document.getElementById('calib-status-text').innerText = "正在启动摄像头...";
+            webgazer.setGazeListener(function(data, elapsedTime) {
+                if (data == null) return;
+                if (document.getElementById('experiment-screen').classList.contains('active')) {
+                    let now = performance.now();
+                    if (now - lastGazeRecordTime > 100) { 
+                        currentGazePoints.push({ x: data.x, y: data.y, t: now });
+                        lastGazeRecordTime = now;
+                    }
+                }
+            }).showVideoPreview(true).showFaceOverlay(true).begin(); 
+
+            let checkCount = 0;
+            let timer = setInterval(() => {
+                let videoFeed = document.getElementById('webgazerVideoFeed');
+                if (videoFeed && videoFeed.videoWidth > 0) {
+                    clearInterval(timer);
+                    document.getElementById('calib-status-text').innerText = "✅ 摄像头就绪！请确认脸在中间。";
+                    document.getElementById('start-calib-btn').style.display = 'inline-block';
+                    document.getElementById('fallback-btn').style.display = 'inline-block';
+                }
+                checkCount++;
+                if (checkCount > 25) {
+                    clearInterval(timer);
+                    document.getElementById('calib-status-text').innerText = "未检测到视频。请点红按钮。";
+                    document.getElementById('fallback-btn').style.display = 'inline-block';
+                }
+            }, 200);
+        }
+
+        const calibPoints = [ {x: 15, y: 20}, {x: 50, y: 20}, {x: 85, y: 20}, {x: 15, y: 50}, {x: 85, y: 50}, {x: 15, y: 80}, {x: 50, y: 80}, {x: 85, y: 80} ];
+        let currentPointIndex = 0, clickCount = 0;
+        const clicksPerPoint = 5;
+
+        function beginActualCalibration() {
+            document.getElementById('calib-prepare').style.display = 'none';
+            document.getElementById('calib-header-text').style.display = 'block';
+            currentPointIndex = 0; clickCount = 0;
+            showNextPoint();
+        }
+
+        function showNextPoint() {
+            if (currentPointIndex >= calibPoints.length) { finishCalibration(); return; }
+            const container = document.getElementById('calib-points-container');
+            container.innerHTML = ''; 
+            const pt = calibPoints[currentPointIndex];
+            const dot = document.createElement('div');
+            dot.className = 'calib-point'; dot.style.left = `${pt.x}%`; dot.style.top = `${pt.y}%`;
+            const label = document.createElement('div');
+            label.className = 'calib-point-num'; label.innerText = clickCount + 1;
+            dot.appendChild(label);
+            dot.onclick = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                if (dot.classList.contains('clicked')) return;
+                try { webgazer.recordScreenPosition(e.clientX, e.clientY, 'click'); } catch (err) {}
+                clickCount++;
+                if (clickCount >= clicksPerPoint) {
+                    dot.classList.add('clicked'); currentPointIndex++; clickCount = 0;
+                    setTimeout(showNextPoint, 300);
+                } else {
+                    let scaleFactor = 1.4 - (clickCount * 0.15);
+                    dot.style.transform = `translate(-50%, -50%) scale(${scaleFactor})`;
+                    label.innerText = clickCount + 1;
+                }
+            };
+            container.appendChild(dot);
+            document.getElementById('calib-progress').innerText = `当前进度：第 ${currentPointIndex + 1} 个点 / 共 8 个点`;
+        }
+
+        function finishCalibration() {
+            document.getElementById('calib-progress').innerText = "校准完成！正在进入实验...";
+            try { webgazer.showVideoPreview(false).showPredictionPoints(false).showFaceOverlay(false).showFaceFeedbackBox(false); } catch(e) {}
+            const wgElements = ['webgazerVideoContainer', 'webgazerFaceOverlay', 'webgazerFaceFeedbackBox', 'webgazerGazeDot'];
+            wgElements.forEach(id => { let el = document.getElementById(id); if (el) el.style.display = 'none'; });
+            setTimeout(() => { goToInstruction('baseline'); }, 500);
+        }
+
+        function goToInstruction(phase) {
+            currentPhase = phase; currentTrial = 0;
+            if (phase === 'baseline') {
+                phaseTitle.innerText = "第一阶段：基线测试 (无手机)";
+                phaseDesc.innerText = "请留意正前方马路。看到车或人经过，请按【空格键】。";
+            } else {
+                phaseTitle.innerText = "第二阶段：分心测试 (看手机)";
+                phaseDesc.innerText = "手机亮起红色时请按【F键】。同时，看到马路上有车/人，依然要按【空格键】。";
+            }
+            showScreen('instruction-screen');
+        }
+
+        document.getElementById('start-trial-btn').addEventListener('click', () => { showScreen('experiment-screen'); runTrial(); });
+
+        function runTrial() {
+            stimCenterEl.classList.remove('show'); stimLeftRoadEl.classList.remove('show'); stimRightRoadEl.classList.remove('show');
+            phonePromptEl.classList.remove('active'); phoneEl.classList.remove('active');
+            stimResponded = false; phoneResponded = false; isFalseAlarmCurrentTrial = false; spaceKeyPressed = false;
+            currentGazePoints = []; currentStimSide = 'none';
+            const delay = Math.random() * 1000 + 1000;
+            setTimeout(() => {
+                const rand = Math.random();
+                const randomStim = stimuliPool[Math.floor(Math.random() * stimuliPool.length)];
+                if (rand < 0.33) { currentStimSide = 'center'; stimCenterEl.innerText = randomStim; stimCenterEl.classList.add('show'); }
+                else if (rand < 0.66) { currentStimSide = 'left_road'; stimLeftRoadEl.innerText = randomStim; stimLeftRoadEl.classList.add('show'); }
+                else { currentStimSide = 'right_road'; stimRightRoadEl.innerText = randomStim; stimRightRoadEl.classList.add('show'); }
+                stimAppearTime = performance.now();
+                if (currentPhase === 'distraction' && Math.random() < 0.6) {
+                    phoneEl.classList.add('active'); phonePromptEl.classList.add('active'); phoneAppearTime = performance.now();
+                }
+                trialTimeout = setTimeout(() => { recordDataAndNext(); }, 1500);
+            }, delay);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!document.getElementById('experiment-screen').classList.contains('active')) return;
+            const isAnyStimShow = stimCenterEl.classList.contains('show') || stimLeftRoadEl.classList.contains('show') || stimRightRoadEl.classList.contains('show');
+            if (e.code === 'Space' && !spaceKeyPressed) {
+                spaceKeyPressed = true; 
+                if (isAnyStimShow && !stimResponded) {
+                    stimResponded = true; stimCenterEl.classList.remove('show'); stimLeftRoadEl.classList.remove('show'); stimRightRoadEl.classList.remove('show');
+                    if (!phonePromptEl.classList.contains('active') || phoneResponded) { finishTrial(); }
+                } else if (!isAnyStimShow && !stimResponded) { isFalseAlarmCurrentTrial = true; }
+            }
+            if (e.code === 'KeyF' && phonePromptEl.classList.contains('active') && !phoneResponded) {
+                phoneResponded = true; phonePromptEl.classList.remove('active'); phoneEl.classList.remove('active');
+                if (stimResponded || !isAnyStimShow) { finishTrial(); }
+            }
+        });
+        document.addEventListener('keyup', (e) => { if (e.code === 'Space') { spaceKeyPressed = false; } });
+        function recordDataAndNext() { finishTrial(); }
+
+        function finishTrial() {
+            clearTimeout(trialTimeout);
+            let stimRt = stimResponded ? (performance.now() - stimAppearTime) : null;
+            let isMiss = !stimResponded && currentStimSide !== 'none';
+            allTrialsData.push({
+                trial_num: allTrialsData.length + 1, phase: currentPhase, participant: participantId,
+                stim_side: currentStimSide, stim_rt: stimRt, is_miss: isMiss, is_false_alarm: isFalseAlarmCurrentTrial,
+                phone_present: phonePromptEl.classList.contains('active') || phoneResponded, gaze_points: currentGazePoints
+            });
+            currentTrial++;
+            if (currentTrial < totalTrialsPerPhase) { setTimeout(runTrial, 800); } 
+            else { if (currentPhase === 'baseline') { goToInstruction('distraction'); } else { endExperiment(); } }
+        }
+
+        function endExperiment() {
+            if (trackingMode === 'webgazer') { try { webgazer.end(); } catch(e) {} }
+            showScreen('result-screen');
+            calculateAndDisplayStats();
+            uploadData();
+        }
+
+        function calculateAndDisplayStats() {
+            let baseTrials = allTrialsData.filter(d => d.phase === 'baseline');
+            let distTrials = allTrialsData.filter(d => d.phase === 'distraction');
+            let baseMiss = baseTrials.filter(d => d.is_miss).length / baseTrials.length * 100;
+            let distMiss = distTrials.filter(d => d.is_miss).length / distTrials.length * 100;
+            let baseFa = baseTrials.filter(d => d.is_false_alarm).length;
+            let distFa = distTrials.filter(d => d.is_false_alarm).length;
+            let baseRts = baseTrials.filter(d => !d.is_miss && d.stim_rt).map(d => d.stim_rt);
+            let baseAvgRt = baseRts.length > 0 ? (baseRts.reduce((a,b)=>a+b,0) / baseRts.length).toFixed(0) : 0;
+            let distRts = distTrials.filter(d => !d.is_miss && d.stim_rt).map(d => d.stim_rt);
+            let distAvgRt = distRts.length > 0 ? (distRts.reduce((a,b)=>a+b,0) / distRts.length).toFixed(0) : 0;
+            document.getElementById('rt-baseline').innerText = baseAvgRt; document.getElementById('miss-baseline').innerText = baseMiss.toFixed(1); document.getElementById('fa-baseline').innerText = baseFa;
+            document.getElementById('rt-distraction').innerText = distAvgRt; document.getElementById('miss-distraction').innerText = distMiss.toFixed(1); document.getElementById('fa-distraction').innerText = distFa;
+            document.getElementById('data-display').style.display = 'flex';
+            let conclusionEl = document.getElementById('conclusion'); conclusionEl.style.display = 'block';
+            if (distMiss > baseMiss || distAvgRt > baseAvgRt) { conclusionEl.innerText = "结论：数据支持预期，手机分心导致了对周边环境反应的漏报率上升或反应时变慢。"; } 
+            else { conclusionEl.innerText = "结论：本次样本中未观察到明显的分心效应。"; }
+        }
+
+        function uploadData() {
+            const statusEl = document.getElementById('upload-status');
+            
+            let compressedData = allTrialsData.map(trial => { 
+                return { ...trial, gaze_points: trial.gaze_points.filter((_, index) => index % 5 === 0) }; 
+            });
+            
+            const postData = { 
+                project: PROJECT_CODE, 
+                experiment: 'rider_distraction_eyetracking', 
+                participant: participantId, 
+                condition: trackingMode, 
+                trials: compressedData 
+            };
+
+            fetch(API_URL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(postData) 
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok || data.record_id) { 
+                    let msg = "✅ 数据成功上传！被试编号：" + participantId;
+                    if (data.warnings && data.warnings.length > 0) {
+                        msg += ` (注意：后台提示数据被截断 - ${data.warnings.join(', ')})`;
+                    }
+                    statusEl.innerText = msg; 
+                    document.getElementById('download-btn').style.display = 'inline-block'; 
+                    
+                    fetch(`${DATA_URL}?project=${PROJECT_CODE}`)
+                    .then(res => res.json())
+                    .then(allData => console.log("全班数据:", allData.records))
+                    .catch(e => console.log("读取全班数据失败"));
+                    
+                } else { 
+                    statusEl.innerText = "❌ 上传失败：" + (data.msg || "未知错误"); 
+                    document.getElementById('download-btn').style.display = 'inline-block'; 
+                }
+            })
+            .catch(error => { 
+                statusEl.innerText = "❌ 网络异常，无法上传，但可以本地下载。"; 
+                document.getElementById('download-btn').style.display = 'inline-block'; 
+            });
+        }
+
+        function downloadLocalCSV() {
+            if (allTrialsData.length === 0) return;
+            let csvRows = [['trial_num', 'phase', 'participant', 'stim_side', 'stim_rt', 'is_miss', 'is_false_alarm', 'gaze_data_JSON'].join(',')];
+            allTrialsData.forEach(d => {
+                let gazeString = JSON.stringify(d.gaze_points).replace(/"/g, '""');
+                csvRows.push([d.trial_num, d.phase, d.participant, d.stim_side, d.stim_rt || '', d.is_miss, d.is_false_alarm, `"${gazeString}"`].join(','));
+            });
+            const blob = new Blob(["\uFEFF" + csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${participantId}_rider_data.csv`; link.click();
+        }
+
+
+        // =========================================
+        // 实验二逻辑
+        // =========================================
+        let posnerData = [];
+        let posnerLoadLevel = 'low';
+        let posnerTrialCount = 0;
+        
+        let pTrialTimeout, pCueTimeout, pTargetTimeout;
+        let pTargetTime = 0;
+        let pTargetSide = 'none';
+        let pCueType = 'none';
+        let pValidity = 'none';
+        let pSOA = 0;
+        
+        let pIsTargetOn = false;
+        let pResponded = false;
+        let pMathOn = false;
+        
+        let pTrackingMode = 'mouse';
+        let pCurrentGazePoints = [];
+        let pLastGazeRecordTime = 0;
+
+        const pGameScreen = document.getElementById('posner-game-screen');
+        const pFixation = document.getElementById('posner-fixation');
+        const pCueCentral = document.getElementById('posner-cue-central');
+        const pCueLeft = document.getElementById('posner-cue-left');
+        const pCueRight = document.getElementById('posner-cue-right');
+        const pTargetLeft = document.getElementById('posner-target-left');
+        const pTargetRight = document.getElementById('posner-target-right');
+        const pReticleLeft = document.getElementById('posner-reticle-left');
+        const pReticleRight = document.getElementById('posner-reticle-right');
+        const pMathUI = document.getElementById('posner-math-ui');
+        const pMathText = document.getElementById('math-text');
+
+        function enterExperimentTwo() {
+            document.getElementById('main-navbar').style.display = 'none';
+            document.getElementById('view-lobby').style.display = 'none'; 
+            document.body.style.overflow = 'hidden'; 
+            document.getElementById('posner-experiment-container').style.display = 'block';
+            
+            document.querySelectorAll('#posner-experiment-container .screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('posner-calibration').classList.remove('active'); // 修复：强制隐藏上一次可能残留的校准页
+            document.getElementById('posner-consent').classList.add('active');
+            
+            document.getElementById('status-exp2').innerText = "已完成";
+            document.getElementById('card-exp2').style.borderTopColor = "#2e7d32";
+        }
+
+        function exitExperimentTwo() {
+            if(confirm("实验尚未完成，确定要退出吗？")) { 
+                returnToLobby(); 
+                if (pTrackingMode === 'webgazer') { try { webgazer.end(); } catch(e) {} }
+            }
+        }
+
+        function startPosnerMouseTracking() {
+            pTrackingMode = 'mouse';
+            try { webgazer.end(); } catch(e) {}
+            document.addEventListener('mousemove', (e) => {
+                if (pGameScreen.classList.contains('active')) {
+                    let now = performance.now();
+                    if (now - pLastGazeRecordTime > 100) {
+                        pCurrentGazePoints.push({ x: e.clientX, y: e.clientY, t: now });
+                        pLastGazeRecordTime = now;
+                    }
+                }
+            });
+            startPosnerPhase1();
+        }
+
+        function startPosnerWebGazer() {
+            pTrackingMode = 'webgazer';
+            document.getElementById('posner-setup').classList.remove('active');
+            document.getElementById('posner-calibration').classList.add('active');
+            
+            document.getElementById('p-calib-status-text').innerText = "正在启动摄像头...";
+            
+            webgazer.setGazeListener(function(data, elapsedTime) {
+                if (data == null) return;
+                if (pGameScreen.classList.contains('active')) {
+                    let now = performance.now();
+                    if (now - pLastGazeRecordTime > 100) { 
+                        pCurrentGazePoints.push({ x: data.x, y: data.y, t: now });
+                        pLastGazeRecordTime = now;
+                    }
+                }
+            }).showVideoPreview(true).showFaceOverlay(true).begin(); 
+
+            let checkCount = 0;
+            let timer = setInterval(() => {
+                let videoFeed = document.getElementById('webgazerVideoFeed');
+                if (videoFeed && videoFeed.videoWidth > 0) {
+                    clearInterval(timer);
+                    document.getElementById('p-calib-status-text').innerText = "✅ 摄像头就绪！请确认脸在中间。";
+                    document.getElementById('p-start-calib-btn').style.display = 'inline-block';
+                    document.getElementById('p-fallback-btn').style.display = 'inline-block';
+                }
+                checkCount++;
+                if (checkCount > 25) {
+                    clearInterval(timer);
+                    document.getElementById('p-calib-status-text').innerText = "未检测到视频。请点红按钮切换。";
+                    document.getElementById('p-fallback-btn').style.display = 'inline-block';
+                }
+            }, 200);
+        }
+
+        let pCurrentPointIndex = 0, pClickCount = 0;
+
+        function beginPosnerCalibration() {
+            document.getElementById('p-calib-prepare').style.display = 'none';
+            document.getElementById('p-calib-header-text').style.display = 'block';
+            pCurrentPointIndex = 0; pClickCount = 0;
+            showPosnerNextPoint();
+        }
+
+        function showPosnerNextPoint() {
+            if (pCurrentPointIndex >= calibPoints.length) { finishPosnerCalibration(); return; }
+            const container = document.getElementById('p-calib-points-container');
+            container.innerHTML = ''; 
+            const pt = calibPoints[pCurrentPointIndex];
+            const dot = document.createElement('div');
+            dot.className = 'calib-point'; dot.style.left = `${pt.x}%`; dot.style.top = `${pt.y}%`;
+            const label = document.createElement('div');
+            label.className = 'calib-point-num'; label.innerText = pClickCount + 1;
+            dot.appendChild(label);
+            dot.onclick = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                if (dot.classList.contains('clicked')) return;
+                try { webgazer.recordScreenPosition(e.clientX, e.clientY, 'click'); } catch (err) {}
+                pClickCount++;
+                if (pClickCount >= clicksPerPoint) {
+                    dot.classList.add('clicked'); pCurrentPointIndex++; pClickCount = 0;
+                    setTimeout(showPosnerNextPoint, 300);
+                } else {
+                    let scaleFactor = 1.4 - (pClickCount * 0.15);
+                    dot.style.transform = `translate(-50%, -50%) scale(${scaleFactor})`;
+                    label.innerText = pClickCount + 1;
+                }
+            };
+            container.appendChild(dot);
+            document.getElementById('p-calib-progress').innerText = `当前进度：第 ${pCurrentPointIndex + 1} 个点 / 共 8 个点`;
+        }
+
+        function finishPosnerCalibration() {
+            document.getElementById('p-calib-progress').innerText = "校准完成！正在进入实验...";
+            try { webgazer.showVideoPreview(false).showPredictionPoints(false).showFaceOverlay(false).showFaceFeedbackBox(false); } catch(e) {}
+            const wgElements = ['webgazerVideoContainer', 'webgazerFaceOverlay', 'webgazerFaceFeedbackBox', 'webgazerGazeDot'];
+            wgElements.forEach(id => { let el = document.getElementById(id); if (el) el.style.display = 'none'; });
+            setTimeout(() => { 
+                // 核心修复：在这里显式移除校准页的 active 状态
+                document.getElementById('posner-calibration').classList.remove('active');
+                startPosnerPhase1(); 
+            }, 500);
+        }
+
+        function startPosnerPhase1() {
+            // 确保所有 screen 隐藏
+            document.querySelectorAll('#posner-experiment-container .screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('posner-calibration').classList.remove('active'); // 双重保险
+            
+            posnerLoadLevel = 'low';
+            posnerTrialCount = 0;
+            document.getElementById('posner-phase-title').innerText = "第一阶段：低认知负荷";
+            document.getElementById('posner-phase-desc').innerText = "请专注驾驶。盯住中心十字，发现左右两侧目标后按空格。";
+            document.getElementById('posner-instruction').classList.add('active');
+        }
+
+        function startPosnerTrials() {
+            document.querySelectorAll('#posner-experiment-container .screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('posner-calibration').classList.remove('active'); // 双重保险
+            pGameScreen.classList.add('active');
+            runPosnerTrial();
+        }
+
+        function generateMathProblem() {
+            const isAdd = Math.random() > 0.5;
+            let a = Math.floor(Math.random() * 20) + 10;
+            let b = Math.floor(Math.random() * 10) + 1;
+            let result = isAdd ? a + b : a - b;
+            
+            let isCorrect = Math.random() > 0.5;
+            let displayResult = isCorrect ? result : result + (Math.random() > 0.5 ? 2 : -2);
+            pMathText.innerText = `${a} ${isAdd ? '+' : '-'} ${b} = ${displayResult}`;
+        }
+
+        function runPosnerTrial() {
+            clearTimeout(pTrialTimeout); clearTimeout(pCueTimeout); clearTimeout(pTargetTimeout);
+            
+            pFixation.style.display = 'block';
+            pCueCentral.style.display = 'none';
+            pCueLeft.style.display = 'none'; pCueRight.style.display = 'none';
+            pTargetLeft.classList.remove('show'); pTargetRight.classList.remove('show');
+            pTargetLeft.style.display = 'none'; pTargetRight.style.display = 'none';
+            pReticleLeft.style.display = 'none'; pReticleRight.style.display = 'none';
+            pMathUI.style.display = 'none';
+            pCurrentGazePoints = [];
+            pIsTargetOn = false; pResponded = false; pMathOn = false;
+            
+            if (posnerTrialCount === 16 && posnerLoadLevel === 'low') {
+                posnerLoadLevel = 'high';
+                document.getElementById('posner-phase-title').innerText = "第二阶段：高认知负荷";
+                document.getElementById('posner-phase-desc').innerText = "加入心算任务！判断上方等式的对错（对F，错J）。同时盯住中间按空格抓目标！";
+                document.querySelectorAll('#posner-experiment-container .screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('posner-calibration').classList.remove('active');
+                document.getElementById('posner-instruction').classList.add('active');
+                return;
+            } else if (posnerTrialCount >= 32) {
+                endPosnerExperiment();
+                return;
+            }
+
+            pTargetSide = Math.random() < 0.5 ? 'left' : 'right';
+            pCueType = Math.random() < 0.5 ? 'central' : 'peripheral';
+            pValidity = Math.random() < 0.8 ? 'valid' : 'invalid';
+            pSOA = Math.random() < 0.5 ? 100 : 600;
+            
+            setTimeout(() => {
+                if (pCueType === 'central') {
+                    pCueCentral.innerText = pValidity === 'valid' ? (pTargetSide === 'left' ? '←' : '→') : (pTargetSide === 'left' ? '→' : '←');
+                    pCueCentral.style.display = 'block';
+                } else {
+                    let cSide = pValidity === 'valid' ? pTargetSide : (pTargetSide === 'left' ? 'right' : 'left');
+                    if (cSide === 'left') pCueLeft.style.display = 'block';
+                    else pCueRight.style.display = 'block';
+                }
+
+                if (posnerLoadLevel === 'high') {
+                    generateMathProblem();
+                    pMathUI.style.display = 'block';
+                    pMathOn = true;
+                }
+
+                pCueTimeout = setTimeout(() => {
+                    pCueCentral.style.display = 'none';
+                    pCueLeft.style.display = 'none'; pCueRight.style.display = 'none';
+
+                    if (pTargetSide === 'left') {
+                        pTargetLeft.innerText = '🚶';
+                        pTargetLeft.style.display = 'block';
+                        void pTargetLeft.offsetWidth;
+                        pTargetLeft.classList.add('show');
+                        pReticleLeft.style.display = 'block';
+                    } else {
+                        pTargetRight.innerText = '🚗';
+                        pTargetRight.style.display = 'block';
+                        void pTargetRight.offsetWidth;
+                        pTargetRight.classList.add('show');
+                        pReticleRight.style.display = 'block';
+                    }
+                    
+                    pIsTargetOn = true;
+                    pTargetTime = performance.now();
+
+                    pTargetTimeout = setTimeout(() => {
+                        if (!pResponded) { finishPosnerTrial(false); }
+                    }, 1200);
+
+                }, pSOA);
+            }, 500); 
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!pGameScreen.classList.contains('active')) return;
+
+            if (pMathOn && (e.code === 'KeyF' || e.code === 'KeyJ')) {
+                pMathOn = false; 
+                pMathUI.style.display = 'none';
+            }
+
+            if (e.code === 'Space' && pIsTargetOn && !pResponded) {
+                pResponded = true;
+                clearTimeout(pTargetTimeout);
+                let rt = performance.now() - pTargetTime;
+                finishPosnerTrial(true, rt);
+            }
+        });
+
+        function finishPosnerTrial(isHit, rt = null) {
+            pIsTargetOn = false;
+            pTargetLeft.classList.remove('show'); pTargetRight.classList.remove('show');
+            pReticleLeft.style.display = 'none'; pReticleRight.style.display = 'none';
+
+            posnerData.push({
+                trial_num: posnerData.length + 1, participant: participantId,
+                load: posnerLoadLevel, cue_type: pCueType, validity: pValidity,
+                soa: pSOA, target_side: pTargetSide, is_hit: isHit, rt: rt,
+                gaze_points: pCurrentGazePoints 
+            });
+
+            posnerTrialCount++;
+            pTrialTimeout = setTimeout(runPosnerTrial, 800);
+        }
+
+        function endPosnerExperiment() {
+            if (pTrackingMode === 'webgazer') { try { webgazer.end(); } catch(e) {} }
+            
+            pGameScreen.classList.remove('active');
+            document.getElementById('posner-result').classList.add('active');
+            
+            let calcAvg = (filterFn) => {
+                let rts = posnerData.filter(filterFn).map(d => d.rt);
+                return rts.length ? (rts.reduce((a,b)=>a+b,0) / rts.length).toFixed(0) : '--';
+            };
+            document.getElementById('p-c-low-val').innerText = calcAvg(d => d.is_hit && d.validity === 'valid' && d.cue_type === 'central' && d.load === 'low');
+            document.getElementById('p-c-low-inv').innerText = calcAvg(d => d.is_hit && d.validity === 'invalid' && d.cue_type === 'central' && d.load === 'low');
+            document.getElementById('p-c-high-val').innerText = calcAvg(d => d.is_hit && d.validity === 'valid' && d.cue_type === 'central' && d.load === 'high');
+            document.getElementById('p-c-high-inv').innerText = calcAvg(d => d.is_hit && d.validity === 'invalid' && d.cue_type === 'central' && d.load === 'high');
+            document.getElementById('p-p-low-val').innerText = calcAvg(d => d.is_hit && d.validity === 'valid' && d.cue_type === 'peripheral' && d.load === 'low');
+            document.getElementById('p-p-low-inv').innerText = calcAvg(d => d.is_hit && d.validity === 'invalid' && d.cue_type === 'peripheral' && d.load === 'low');
+
+            // 延迟渲染 Canvas 以等待 DOM 完全撑开
+            setTimeout(() => {
+                drawGazeCanvas();
+            }, 200);
+
+            // 对实验二的 trials 进行数据压缩，避免超限
+            const compressedPosnerData = posnerData.map(trial => {
+                return {
+                    ...trial,
+                    gaze_points: trial.gaze_points ? trial.gaze_points.filter((_, index) => index % 5 === 0) : []
+                };
+            });
+
+            const postData = {
+                project: PROJECT_CODE, experiment: 'posner_hud_driving',
+                participant: participantId, condition: pTrackingMode, trials: compressedPosnerData
+            };
+            
+            fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(postData) })
+            .then(res => res.json()).then(data => {
+                if (data.ok || data.record_id) {
+                    let msg = "✅ 数据成功上传至后台！";
+                    if (data.warnings && data.warnings.length > 0) {
+                        msg += ` (注意：${data.warnings.join(', ')})`;
+                    }
+                    document.getElementById('posner-upload-status').innerText = msg;
+                    document.getElementById('posner-download-btn').style.display = 'inline-block';
+                    
+                    fetch(`${DATA_URL}?project=${PROJECT_CODE}`)
+                    .then(res => res.json())
+                    .then(allData => console.log("全班数据:", allData.records))
+                    .catch(e => console.log("读取全班数据失败"));
+                    
+                } else {
+                    document.getElementById('posner-upload-status').innerText = "❌ 上传失败：" + (data.msg || "未知错误") + "，但可本地下载。";
+                    document.getElementById('posner-download-btn').style.display = 'inline-block';
+                }
+            }).catch(e => {
+                document.getElementById('posner-upload-status').innerText = "❌ 网络异常，但可本地下载。";
+                document.getElementById('posner-download-btn').style.display = 'inline-block';
+            });
+        }
+
+        // 增强版眼动渲染
+        function drawGazeCanvas() {
+            const container = document.getElementById('gazeCanvas').parentNode;
+            const canvas = document.getElementById('gazeCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const rect = container.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            
+            const cWidth = rect.width > 0 ? rect.width : 500;
+            const cHeight = cWidth * 0.6; 
+            
+            canvas.width = cWidth * dpr;
+            canvas.height = cHeight * dpr;
+            canvas.style.width = cWidth + 'px';
+            canvas.style.height = cHeight + 'px';
+            
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, w, h);
+            
+            ctx.strokeStyle = 'rgba(0, 229, 255, 0.3)';
+            ctx.lineWidth = 2 * dpr;
+            ctx.beginPath(); ctx.moveTo(w/2, h*0.4 - 20*dpr); ctx.lineTo(w/2, h*0.4 + 20*dpr); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(w/2 - 20*dpr, h*0.4); ctx.lineTo(w/2 + 20*dpr, h*0.4); ctx.stroke();
+
+            let totalPoints = 0;
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+
+            posnerData.forEach(trial => {
+                if (!trial.gaze_points || trial.gaze_points.length === 0) return;
+                
+                trial.gaze_points.forEach(pt => {
+                    let px = (pt.x / winW) * w;
+                    let py = (pt.y / winH) * h;
+                    
+                    if(px < 0 || px > w || py < 0 || py > h) return;
+
+                    totalPoints++;
+                    ctx.beginPath();
+                    ctx.arc(px, py, 2.5 * dpr, 0, Math.PI * 2);
+                    
+                    if (trial.load === 'low') {
+                        ctx.fillStyle = 'rgba(0, 229, 255, 0.5)'; 
+                    } else {
+                        ctx.fillStyle = 'rgba(255, 235, 59, 0.5)'; 
+                    }
+                    ctx.fill();
+                });
+            });
+
+            ctx.fillStyle = '#00e5ff';
+            ctx.fillRect(20 * dpr, 20 * dpr, 12 * dpr, 12 * dpr);
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${14*dpr}px Arial`;
+            ctx.fillText('低负荷视线', 40 * dpr, 31 * dpr);
+
+            ctx.fillStyle = '#ffeb3b';
+            ctx.fillRect(20 * dpr, 45 * dpr, 12 * dpr, 12 * dpr);
+            ctx.fillStyle = '#fff';
+            ctx.fillText('高负荷视线', 40 * dpr, 56 * dpr);
+            
+            if (totalPoints === 0) {
+                ctx.fillStyle = '#ff5555';
+                ctx.font = `bold ${20*dpr}px Arial`;
+                ctx.textAlign = "center";
+                ctx.fillText('未收集到视线数据', w/2, h/2 + 60*dpr);
+                ctx.font = `${14*dpr}px Arial`;
+                ctx.fillStyle = '#aaa';
+                ctx.fillText('(如果您选择了鼠标模式，请确认实验时移动了鼠标)', w/2, h/2 + 90*dpr);
+            }
+        }
+
+        function downloadPosnerCSV() {
+            if (posnerData.length === 0) return;
+            let csvRows = [['trial_num', 'participant', 'load', 'cue_type', 'validity', 'soa', 'target_side', 'is_hit', 'rt', 'gaze_data_JSON'].join(',')];
+            posnerData.forEach(d => {
+                let gazeString = JSON.stringify(d.gaze_points).replace(/"/g, '""');
+                csvRows.push([d.trial_num, d.participant, d.load, d.cue_type, d.validity, d.soa, d.target_side, d.is_hit, d.rt || '', `"${gazeString}"`].join(','));
+            });
+            const blob = new Blob(["\uFEFF" + csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${participantId}_posner_data.csv`; link.click();
+        }
+    </script>
+</body>
+</html>
